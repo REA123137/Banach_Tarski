@@ -212,6 +212,19 @@ def glow_dot(point, color: str = GOLD, radius: float = 0.075,
     return g
 
 
+def fit(mob: Mobject, width: float) -> Mobject:
+    """
+    Shrink a mobject to fit a width - and never grow it.
+
+    ``scale_to_fit_width`` also enlarges, which silently blows short labels up
+    to a different size from their neighbours.  Almost every caller wants a
+    ceiling, not an exact width.
+    """
+    if mob.width > width:
+        mob.scale_to_fit_width(width)
+    return mob
+
+
 def rule(width: float = 5.0, color: str = FAINT, weight: float = 1.6) -> Line:
     return Line(LEFT * width / 2, RIGHT * width / 2).set_stroke(color, weight)
 
@@ -371,12 +384,12 @@ class BTMovingScene(_Narration, MovingCameraScene):
 
         v = vignette(self.vignette_strength)
 
-        def fit(m):
+        def cover(m):
             m.stretch_to_fit_width(frame.width * 1.02)
             m.stretch_to_fit_height(frame.height * 1.02)
             m.move_to(frame.get_center())
 
-        v.add_updater(fit)
+        v.add_updater(cover)
         self._furniture.add(v)
         self.add(v)
         self._init_narration()
@@ -388,8 +401,13 @@ class BTMovingScene(_Narration, MovingCameraScene):
         natural = bar.width
 
         def follow(m: Mobject):
+            # Cairo scales stroke width by 1/frame_width, so a zoomed-in frame
+            # fattens every outline.  Scaling the bar's strokes along with its
+            # geometry cancels that out and keeps the lower third looking the
+            # same at any magnification.
             k = frame.width / base_width
-            m.scale_to_fit_width(natural * k)
+            if m.width > 1e-6:
+                m.scale(natural * k / m.width, scale_stroke=True)
             m.move_to(frame.get_center())
             m.shift(DOWN * (frame.height / 2 - m.height / 2 - 0.42 * k))
 

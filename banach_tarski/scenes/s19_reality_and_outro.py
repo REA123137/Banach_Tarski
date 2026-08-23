@@ -63,18 +63,18 @@ class RealityCheck(BTScene):
 
         # -- the chain -------------------------------------------------------------
         chain = [
-            ("the axiom of choice", CYAN),
-            ("sets with no volume", VIOLET),
-            ("a free group inside the rotations", GOLD),
-            ("one ball becomes two", CORAL),
+            ("the axiom\nof choice", CYAN),
+            ("sets with\nno volume", VIOLET),
+            ("a free group in\nthe rotations", GOLD),
+            ("one ball\nbecomes two", CORAL),
         ]
         nodes = VGroup()
         for text, color in chain:
-            box = panel(3.05, 1.15, color=color)
-            label = T(text, size=16, color=PAPER).scale_to_fit_width(2.65)
+            box = panel(2.85, 1.15, color=color)
+            label = fit(T(text, size=16, color=PAPER, line_spacing=0.85), 2.45)
             label.move_to(box)
             nodes.add(VGroup(box, label))
-        nodes.arrange(RIGHT, buff=0.55).move_to(UP * 0.35)
+        nodes.arrange(RIGHT, buff=0.42).move_to(UP * 0.35)
 
         arrows = VGroup(*[
             Arrow(nodes[i].get_right(), nodes[i + 1].get_left(), buff=0.10,
@@ -137,7 +137,7 @@ class Outro(BT3DScene):
         credit = T("Stefan Banach  ·  Alfred Tarski  ·  Sur la décomposition des "
                    "ensembles de points en parties respectivement congruentes",
                    size=14, color=FAINT)
-        credit.scale_to_fit_width(min(credit.width, 11.5)).move_to(DOWN * 2.35)
+        fit(credit, 11.0).move_to(DOWN * 2.12)
         self.label(credit)
         self.play(FadeIn(credit), run_time=1.0)
         self.wait(1.4)

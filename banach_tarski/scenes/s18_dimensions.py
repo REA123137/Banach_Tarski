@@ -83,24 +83,20 @@ class WhyNotInThePlane(BTScene):
             ("the line", "ℝ", "rotations and slides commute", "safe", MINT),
             ("the plane", "ℝ²", "rotations about a point commute", "safe", MINT),
             ("space", "ℝ³", "rotations contain a free group", "paradoxical", CORAL),
-            ("and above", "ℝⁿ, n ≥ 3", "same reason, every dimension up", "paradoxical", CORAL),
+            ("higher up", "ℝⁿ", "the same reason, in every dimension above three", "paradoxical", CORAL),
         ]
         table = VGroup()
         for name, sym, reason, verdict, color in rows:
             n = T(name, size=SMALL, color=PAPER)
-            s = M(sym, size=SMALL, color=color)
-            r = T(reason, size=16, color=MUTED)
+            s = fit(M(sym, size=SMALL, color=color), 1.6)
+            r = fit(T(reason, size=16, color=MUTED), 4.3)
             v = T(verdict, size=SMALL, color=color, weight=BOLD)
-            row = VGroup(
-                VGroup(n).move_to(LEFT * 5.0, aligned_edge=LEFT),
-                VGroup(s).move_to(LEFT * 2.6),
-                VGroup(r).move_to(RIGHT * 0.6),
-                VGroup(v).move_to(RIGHT * 4.7),
-            )
-            table.add(row)
-        table.arrange(DOWN, buff=0.62).move_to(UP * 0.55)
-        for row in table:
-            row[0].align_to(LEFT * 5.6, LEFT)
+            n.move_to(LEFT * 5.6, aligned_edge=LEFT)
+            s.move_to(LEFT * 2.35, aligned_edge=LEFT)
+            r.move_to(LEFT * 0.6, aligned_edge=LEFT)
+            v.move_to(RIGHT * 4.05, aligned_edge=LEFT)
+            table.add(VGroup(n, s, r, v))
+        table.arrange(DOWN, buff=0.62, aligned_edge=LEFT).move_to(UP * 0.55)
 
         self.play(LaggedStart(*[FadeIn(r, shift=RIGHT * 0.25) for r in table],
                               lag_ratio=0.22, run_time=2.0))

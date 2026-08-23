@@ -16,11 +16,14 @@ from manim import *
 from banach_tarski.style import *
 
 WISHES = [
-    ("every set", "each and every subset of space\ngets a volume", CYAN),
-    ("pieces add up", "split a set in two and the\nvolumes add", MINT),
-    ("moving is free", "rotating or sliding a set\nnever changes its volume", VIOLET),
-    ("the unit cube is 1", "so the numbers mean\nsomething", GOLD),
+    ("every set", "each and every subset\nof space gets a volume", CYAN),
+    ("pieces add up", "split a set in two and\nthe volumes add", MINT),
+    ("moving is free", "turning or sliding a set\nnever changes its volume", VIOLET),
+    ("unit cube = 1", "so the numbers\nmean something", GOLD),
 ]
+
+CARD_W = 3.05
+INNER = CARD_W - 0.4
 
 
 class FourWishes(BTScene):
@@ -31,13 +34,13 @@ class FourWishes(BTScene):
 
         cards = VGroup()
         for i, (name, body, color) in enumerate(WISHES):
-            card = panel(3.0, 2.5, color=color)
+            card = panel(CARD_W, 2.5, color=color)
             num = T(str(i + 1), size=TINY, color=color, weight=BOLD)
-            head = T(name, size=BODY, color=PAPER, weight=BOLD)
-            text = T(body, size=16, color=MUTED, line_spacing=0.85)
+            head = fit(T(name, size=24, color=PAPER, weight=BOLD), INNER)
+            text = fit(T(body, size=15, color=MUTED, line_spacing=0.85), INNER)
             stack = VGroup(num, head, text).arrange(DOWN, buff=0.26).move_to(card)
             cards.add(VGroup(card, stack))
-        cards.arrange(RIGHT, buff=0.34).move_to(UP * 0.55)
+        cards.arrange(RIGHT, buff=0.30).move_to(UP * 0.55)
 
         self.play(LaggedStart(*[FadeIn(c, shift=UP * 0.25, scale=0.94) for c in cards],
                               lag_ratio=0.18, run_time=2.0))
@@ -70,14 +73,14 @@ class FourWishes(BTScene):
         # -- what we keep -----------------------------------------------------------
         self.play(FadeOut(verdict), run_time=0.4)
         keep = T("Lebesgue measure keeps 2, 3 and 4 - and measures almost everything "
-                 "you will ever meet", size=SMALL, color=MINT)
+                 "you will ever meet", size=20, color=MINT)
         keep.move_to(DOWN * 1.85)
         self.play(FadeIn(keep, shift=UP * 0.12), run_time=0.8)
         self.say("A", "The measure mathematicians actually use gives up on the "
                       "monsters and keeps everything else.", hold=3.0)
 
         pieces = T("the five pieces of the ball are exactly those monsters",
-                   size=SMALL, color=CORAL)
+                   size=20, color=CORAL)
         pieces.next_to(keep, DOWN, buff=0.34)
         self.play(FadeIn(pieces, shift=UP * 0.1), run_time=0.7)
         self.say("B", "And the five pieces of the ball are precisely the sets it "

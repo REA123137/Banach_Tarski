@@ -20,6 +20,7 @@ STEP = 2 * PI / 9          # the rotation that generates the orbits, on screen
 N_CLASSES = 7
 CENTER = LEFT * 3.3 + UP * 0.35
 CLASS_COLORS = [CORAL, CYAN, MINT, VIOLET, GOLD, MAGENTA, INDIGO]
+COLUMN = 6.3          # the right-hand text column, kept inside the frame
 
 
 def on_circle(angle: float, r: float = RADIUS, center=CENTER) -> np.ndarray:
@@ -92,13 +93,14 @@ class ASetWithNoLength(BTScene):
 
         # -- the impossible sum --------------------------------------------------------
         board = VGroup(
-            T("turn V by one step, then another, then another…", size=SMALL, color=MUTED),
-            T("the copies never overlap", size=SMALL, color=MUTED),
-            T("together they cover the whole circle", size=SMALL, color=MUTED),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.34)
-        board.move_to(RIGHT * 3.55 + UP * 1.75)
+            T("turn V one step, then another, then another…", size=18, color=MUTED),
+            T("the copies never overlap", size=18, color=MUTED),
+            T("together they cover the whole circle", size=18, color=MUTED),
+        )
         for line in board:
-            line.align_to(board, LEFT)
+            fit(line, COLUMN)
+        board.arrange(DOWN, aligned_edge=LEFT, buff=0.32)
+        board.move_to(RIGHT * 3.45 + UP * 1.70)
 
         self.play(FadeIn(board[0], shift=RIGHT * 0.2), run_time=0.6)
         copies = VGroup()
@@ -116,18 +118,22 @@ class ASetWithNoLength(BTScene):
                       "same length as V.", hold=2.8)
 
         sums = VGroup(
-            T("if V has length 0    →    the circle has length 0", size=SMALL, color=CORAL),
-            T("if V has length > 0  →    the circle has infinite length",
-              size=SMALL, color=CORAL),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.30)
-        sums.next_to(board, DOWN, buff=0.75).align_to(board, LEFT)
+            T("if V has length 0   →   the circle has length 0", size=18, color=CORAL),
+            T("if V has length > 0   →   the circle has infinite length",
+              size=18, color=CORAL),
+        )
+        for line in sums:
+            fit(line, COLUMN)
+        sums.arrange(DOWN, aligned_edge=LEFT, buff=0.30)
+        sums.next_to(board, DOWN, buff=0.70).align_to(board, LEFT)
         self.play(LaggedStart(*[FadeIn(s, shift=RIGHT * 0.2) for s in sums],
                               lag_ratio=0.3, run_time=1.4))
         self.say("B", "Countably many copies of the same length. Add them up: "
                       "either nothing, or infinity.", hold=3.0)
 
-        verdict = T("V has no length at all", size=BODY, color=MINT, weight=BOLD)
-        verdict.next_to(sums, DOWN, buff=0.55).align_to(board, LEFT)
+        verdict = T("V has no length at all", size=SMALL, color=MINT, weight=BOLD)
+        fit(verdict, COLUMN)
+        verdict.next_to(sums, DOWN, buff=0.50).align_to(board, LEFT)
         self.play(FadeIn(verdict, shift=UP * 0.12), run_time=0.8)
         self.play(Circumscribe(verdict, color=MINT, buff=0.2, stroke_width=1.6,
                                run_time=1.6))
