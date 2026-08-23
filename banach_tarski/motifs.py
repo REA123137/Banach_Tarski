@@ -488,6 +488,7 @@ class Scale(VGroup):
 
     def __init__(self, radius: float = 1.5):
         super().__init__()
+        self.radius = radius
         self.dial = Arc(radius=radius, start_angle=PI * 0.15, angle=PI * 0.7, color=theme.INK_DIM, stroke_width=2)
         ticks = VGroup()
         for i in range(21):
@@ -506,10 +507,16 @@ class Scale(VGroup):
         self.add(self.dial, ticks, pan, self.needle, self.cap)
 
     def point_at(self, t: float):
-        """``t`` in [0,1] across the dial."""
-        a = PI * 0.15 + PI * 0.7 * (1 - t)
+        """``t`` in [0, 1] across the dial.
+
+        The needle is anchored to the cap rather than to the world origin, so
+        the instrument keeps working wherever the scene puts it.
+        """
+        pivot = self.cap.get_center()
+        a = PI * 0.15 + PI * 0.7 * (1 - float(np.clip(t, 0.0, 1.0)))
         self.needle.put_start_and_end_on(
-            ORIGIN, self.dial.radius * 0.92 * np.array([np.cos(a), np.sin(a), 0])
+            pivot,
+            pivot + self.radius * 0.92 * np.array([np.cos(a), np.sin(a), 0.0]),
         )
         return self
 

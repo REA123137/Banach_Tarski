@@ -177,15 +177,21 @@ class Cloud(Solid):
             alpha = np.where(t > 0.5, alpha * (1.0 - self.cull_back), alpha)
         alpha = np.where(self.visible, alpha, 0.0)
 
-        order = np.argsort(-depth)                     # far first, so near draws on top
+        # The cairo renderer writes point-cloud pixels straight into the frame
+        # buffer: it never blends, so an rgba alpha would be dropped on export
+        # and a faded point would come out at full brightness.  The film is
+        # drawn on pure black, so compositing is just a multiply — premultiply
+        # here, and drop the points that have gone dark rather than letting
+        # them punch black holes through the dust behind them.
+        keep = np.flatnonzero(alpha > 0.015)
+        order = keep[np.argsort(-depth[keep])]         # far first, so near draws on top
         chunks = np.array_split(order, self.bands)
         for i, (layer, idx) in enumerate(zip(self.layers, chunks)):
             u = i / max(self.bands - 1, 1)
             layer.stroke_width = self.size_far + (self.size - self.size_far) * u
             layer.points = screen[idx]
             rgba = np.ones((len(idx), 4))
-            rgba[:, :3] = self.colors[idx]
-            rgba[:, 3] = alpha[idx]
+            rgba[:, :3] = self.colors[idx] * alpha[idx][:, None]
             layer.rgbas = rgba
 
 
