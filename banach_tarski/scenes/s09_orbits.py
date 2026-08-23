@@ -172,8 +172,8 @@ class S09ShoesSocks(Scene):
             pair = VGroup(left, right).arrange(RIGHT, buff=0.14).move_to(box)
             boxes.add(VGroup(box, pair))
             lefts.add(left)
-        boxes.arrange_in_grid(rows=3, cols=4, buff=0.28).scale_to_fit_width(10.5)
-        boxes.move_to(DOWN * 0.35)
+        boxes.arrange_in_grid(rows=3, cols=4, buff=0.28).scale_to_fit_width(9.6)
+        boxes.move_to(UP * 0.25)
         self.play(FadeIn(boxes, lag_ratio=0.06, run_time=1.2))
         self.wait(0.6)
 
@@ -208,8 +208,8 @@ class S09ShoesSocks(Scene):
             handle = theme.rule(width=0.6, color=theme.GHOST, stroke=3.0)
             handle.move_to(drawer.get_bottom() + UP * 0.14)
             drawers.add(VGroup(drawer, pair, handle))
-        drawers.arrange_in_grid(rows=3, cols=4, buff=0.28).scale_to_fit_width(10.5)
-        drawers.move_to(DOWN * 0.35)
+        drawers.arrange_in_grid(rows=3, cols=4, buff=0.28).scale_to_fit_width(9.6)
+        drawers.move_to(UP * 0.25)
         self.play(FadeIn(drawers, lag_ratio=0.06, run_time=1.2))
         self.wait(1.0)
 

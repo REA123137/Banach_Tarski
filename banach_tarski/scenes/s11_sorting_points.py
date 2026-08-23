@@ -73,8 +73,9 @@ class S11Batches(Scene):
         self.play(Write(formula, run_time=1.8))
 
         pts, words, heads, _ = build_orbit()
-        stage = space.Stage(space.View(yaw=-0.55, pitch=0.24, scale=2.35))
-        stage.view.origin = np.array([0.0, -0.55, 0.0])
+        # the sphere sits right of centre: the legend needs the left third
+        stage = space.Stage(space.View(yaw=-0.55, pitch=0.24, scale=2.25))
+        stage.view.origin = np.array([2.15, -0.30, 0.0])
         for wire in space.wire_sphere(1.0, 10, 5, color="#141414", width=1.0):
             stage.add(wire)
         cloud = space.Cloud(pts, colors=theme.INK_DIM, size=2.4, size_far=0.9, fog=0.8, bands=6)
@@ -90,17 +91,20 @@ class S11Batches(Scene):
         for letter in ("a", "A", "b", "B"):
             dot = theme.body("●", size=22, color=BATCH_COLORS[letter])
             tag = theme.body(
-                f"P{'1234'[('a', 'A', 'b', 'B').index(letter)]}  ·  itinerary begins with "
+                f"P{'1234'[('a', 'A', 'b', 'B').index(letter)]}  ·  begins with "
                 f"{theme.letter_glyph(letter)}",
-                size=24,
+                size=22,
                 color=theme.INK_DIM,
             )
-            legend.add(VGroup(dot, tag).arrange(RIGHT, buff=0.22))
-        legend.arrange(DOWN, buff=0.22, aligned_edge=LEFT).to_corner(DOWN + LEFT, buff=0.55)
+            legend.add(VGroup(dot, tag).arrange(RIGHT, buff=0.20))
+        legend.arrange(DOWN, buff=0.24, aligned_edge=LEFT)
+        legend.move_to(np.array([-4.6, -0.2, 0.0]))
         self.play(FadeIn(legend, lag_ratio=0.15, run_time=1.0))
 
-        white = theme.caption("the representative stays white: its itinerary is empty", size=24)
-        white.to_corner(DOWN + RIGHT, buff=0.55)
+        white = theme.caption("the representative stays white:", size=22)
+        white2 = theme.caption("its itinerary is empty", size=22)
+        white = VGroup(white, white2).arrange(DOWN, buff=0.14)
+        white.move_to(np.array([-4.6, -2.5, 0.0]))
         self.play(FadeIn(white, run_time=0.8))
         self.wait(2.6)
         self.play(FadeOut(VGroup(formula, legend, white), run_time=0.8))
