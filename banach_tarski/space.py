@@ -606,3 +606,40 @@ def arc_points(normal, start: float, end: float, radius: float = 1.0, samples: i
     v = np.cross(n, u)
     t = np.linspace(start, end, samples)
     return radius * (np.cos(t)[:, None] * u + np.sin(t)[:, None] * v)
+
+
+def reveal_cloud(cloud: Cloud, run_time: float = 3.0, power: float = 3.0, rate=None):
+    """Show a cloud point by point, faster and faster — an orbit thickening."""
+    n = len(cloud.points)
+    cloud.visible = np.zeros(n, dtype=bool)
+
+    def upd(_m, alpha):
+        k = int(n * min(alpha, 1.0) ** power)
+        cloud.visible = np.arange(n) < max(k, 1)
+
+    from manim import linear
+
+    return UpdateFromAlphaFunc(
+        cloud.mobject, upd, run_time=run_time, rate_func=rate or linear
+    )
+
+
+def trails(points: np.ndarray, matrix: np.ndarray, samples: int = 26, arc: float = 1.0):
+    """Every point smeared along its own path — the long-exposure look.
+
+    Returns one big array of positions, ready to hand to a :class:`Cloud`,
+    together with the fraction along the trail of each position so the tail can
+    be faded out.
+    """
+    axis, angle = axis_angle(matrix)
+    from .rotations import rotation_about
+
+    pts = np.asarray(points, dtype=float).reshape(-1, 3)
+    out = np.empty((samples * len(pts), 3))
+    frac = np.empty(samples * len(pts))
+    for i in range(samples):
+        t = i / max(samples - 1, 1)
+        r = rotation_about(axis, angle * arc * t)
+        out[i * len(pts) : (i + 1) * len(pts)] = pts @ r.T
+        frac[i * len(pts) : (i + 1) * len(pts)] = t
+    return out, frac
