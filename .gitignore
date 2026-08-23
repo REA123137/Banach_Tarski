@@ -1,0 +1,8 @@
+# Manim output
+media/
+out/
+__pycache__/
+*.pyc
+
+# Generated canvas furniture (rebuilt on first render)
+assets/vignette-*.png
