@@ -154,7 +154,7 @@ class S05RubikNotFree(Scene):
 
         word = VGroup()
         for i in range(4):
-            self.play(Rotate(cube.front, angle=-PI / 2, run_time=0.7, rate_func=theme.EASE))
+            self.play(motifs.turn_face(cube, cube.front, -PI / 2, run_time=0.7))
             tile = theme.mono("a", size=52, color=theme.C_A)
             word.add(tile)
             word.arrange(RIGHT, buff=0.35).move_to(DOWN * 1.3)

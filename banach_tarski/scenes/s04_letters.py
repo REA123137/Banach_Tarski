@@ -63,7 +63,7 @@ class S04RubikWord(Scene):
         for i, letter in enumerate(MOVES):
             turn = -PI / 2 if letter.islower() else PI / 2
             face = cube.front if letter.lower() == "a" else cube.top
-            self.play(Rotate(face, angle=turn, run_time=0.85, rate_func=theme.EASE))
+            self.play(motifs.turn_face(cube, face, turn, run_time=0.85))
             tile = theme.mono(theme.letter_glyph(letter), size=44,
                               color=theme.LETTER_COLORS[letter])
             word.add(tile)
@@ -179,7 +179,7 @@ class S04Ribbon(Scene):
         cube = motifs.rubik_cube(cell=0.55)
         cube.move_to(UP * 1.6)
         self.play(FadeIn(cube, run_time=0.8))
-        self.play(Rotate(cube.front, angle=-PI / 2, run_time=0.8, rate_func=theme.EASE))
+        self.play(motifs.turn_face(cube, cube.front, -PI / 2, run_time=0.8))
 
         # the ribbon: a long pale strip the letters are printed on
         strip = theme.panel(12.4, 1.5, fill="#0E0E0E", stroke=theme.GHOST)

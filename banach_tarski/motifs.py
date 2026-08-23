@@ -447,7 +447,36 @@ def rubik_cube(cell: float = 0.42) -> VGroup:
     side.next_to(front, RIGHT, buff=0).shift(UP * cell * 0.75)
     cube = VGroup(front, top, side)
     cube.front, cube.top, cube.side = front, top, side
+    # the affine map each face was drawn through, so a turn can be played back
+    # in the face's own plane rather than in the picture plane
+    cube.skew = {id(front): np.eye(3), id(top): skew, id(side): skew2}
     return cube
+
+
+def turn_face(cube: VGroup, face: VGroup, angle: float, run_time: float = 0.8):
+    """Turn one face of the cube, correctly, in cabinet projection.
+
+    A face drawn through the skew ``S`` turns in its own plane by ``R``; on the
+    page that reads as ``S R S⁻¹``.  Rotating the drawn parallelogram directly
+    instead — which is what ``Rotate`` would do — tears the face off the cube.
+    """
+    from manim import UpdateFromAlphaFunc
+
+    skew = cube.skew[id(face)]
+    inverse = np.linalg.inv(skew)
+    centre = face.get_center()
+    start = face.copy()
+
+    def spin(mob, alpha):
+        a = angle * alpha
+        rot = np.array(
+            [[np.cos(a), -np.sin(a), 0.0], [np.sin(a), np.cos(a), 0.0], [0.0, 0.0, 1.0]]
+        )
+        fresh = start.copy()
+        fresh.apply_matrix(skew @ rot @ inverse, about_point=centre)
+        mob.become(fresh)
+
+    return UpdateFromAlphaFunc(face, spin, run_time=run_time, rate_func=theme.EASE)
 
 
 def chocolate_bar(cols: int = 6, rows: int = 4, cell: float = 0.62) -> VGroup:
