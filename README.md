@@ -12,6 +12,7 @@ easing curve, one small palette, no LaTeX.
 make deps          # cairo, pango, ffmpeg, manim
 make preview       # every scene, fast
 make QUALITY=-qh   # every scene, 1080p60
+make film          # join the rendered scenes into one cut
 make list          # what can be rendered
 make check         # verify the mathematics the film asserts
 ```
@@ -22,7 +23,10 @@ or, for one shot:
 python3 -m manim -qh banach_tarski/scenes/s12_circle.py S12Circle
 ```
 
-Output lands in `media/videos/<module>/<quality>/<Scene>.mp4`.
+Output lands in `media/videos/<module>/<quality>/<Scene>.mp4`. `make film`
+concatenates them, in the order of `film_order.txt`, into a single
+`media/TwoBalls.mp4` — the assembly order is the script's, so the cut plays as
+the film reads.
 
 ## Nothing on screen is staged
 
