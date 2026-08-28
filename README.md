@@ -6,13 +6,18 @@ explained in the order you actually understand it* (Iasmina & Rym, v4).
 Every **ANIMATION** block of the script and every **ANIMATION IDEA** the script
 attaches to a scene is coded here as an independently renderable
 [manim](https://www.manim.community/) scene. Black background throughout, one
-easing curve, one small palette, no LaTeX.
+easing curve, one small palette, and everything set in LaTeX's Computer Modern
+— a mathematics film should be set in the type mathematics is set in.
+
+Each of the fourteen sequences has its script beside it in `script/`: the
+voice-over, the on-screen text, the directions, and the scenes that cover it.
 
 ```bash
-make deps          # cairo, pango, ffmpeg, manim
+make deps          # cairo, pango, ffmpeg, LaTeX, manim
 make preview       # every scene, fast
 make QUALITY=-qh   # every scene, 1080p60
 make film          # join the rendered scenes into one cut
+make pack          # one folder per sequence: its scenes and its script
 make list          # what can be rendered
 make check         # verify the mathematics the film asserts
 ```
@@ -55,7 +60,31 @@ banach_tarski/
   anim.py        the gestures the film repeats
   selfcheck.py   the receipt (make check)
   scenes/        one module per scene of the script
+script/          one markdown file per sequence: voice-over and directions
 ```
+
+### Type, and why nothing overlaps
+
+All prose goes through `theme.body`, `theme.display`, `theme.caption`; all
+mathematics through `theme.formula`. The first three take the script's own
+Unicode and run it through `latex_escape`, which knows every non-ASCII
+character the film uses and refuses any it does not. `theme.formula` takes
+LaTeX directly and rejects Unicode at the call, so a stray `⊔` fails on the
+line that wrote it rather than deep inside a compile log.
+
+The frame is three bands: a head band for titles and formulas, a stage band
+for geometry, a foot band for captions. `theme.head`, `theme.foot` and
+`theme.stage` each *fit* their argument into their band, shrinking it if it
+does not fit, and `Stage.fit` shrinks and re-centres a 3D view until its
+geometry sits inside the middle band — a scene whose pieces fly apart later
+declares that with `spread`. Overlap is therefore not something to check for
+afterwards; there is no way to construct it. `theme.assert_clear` is there for
+the cases the bands cannot cover.
+
+One consequence worth knowing: LaTeX is typeset, not drawn, so anything that
+rebuilds a label every frame means a typesetting run every frame. The dials of
+scene 7 move their needles with `set_needle` and typeset a reading only when it
+settles, and the magnification in the endless zoom is re-set once per octave.
 
 ### Why a hand-rolled 3D stage
 

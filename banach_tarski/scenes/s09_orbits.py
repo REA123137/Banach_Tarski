@@ -52,10 +52,10 @@ class S09Orbit(Scene):
         theme.apply_defaults(self)
 
         formulas = VGroup(
-            theme.formula("G = ⟨A, B⟩        ρ ∈ G", size=38),
-            theme.formula("orbit of p  =  { ρ(p) : ρ ∈ G }", size=38),
+            theme.formula(r"G = \langle A, B \rangle \qquad \rho \in G", size=38),
+            theme.formula(r"\text{orbit of } p \;=\; \{\, \rho(p) \;:\; \rho \in G \,\}", size=38),
         ).arrange(DOWN, buff=0.32)
-        formulas.to_edge(UP, buff=0.55)
+        theme.head(formulas)
         self.play(Write(formulas[0], run_time=1.2))
 
         stage = space.Stage(space.View(yaw=-0.6, pitch=0.26, scale=2.0))
@@ -84,7 +84,7 @@ class S09Orbit(Scene):
         gloss = theme.body(
             "every place that point can be sent by our motions", size=30, color=theme.INK_DIM
         )
-        gloss.to_edge(DOWN, buff=0.5)
+        theme.foot(gloss)
         self.play(FadeIn(gloss, run_time=0.8))
         self.wait(2.2)
         self.play(FadeOut(VGroup(formulas, gloss), run_time=0.8),
@@ -113,7 +113,7 @@ class S09Representatives(Scene):
 
         head = theme.body("the sphere is divided into orbits, which never touch",
                           size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.55)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.9))
         self.wait(1.6)
 
@@ -132,17 +132,18 @@ class S09Representatives(Scene):
             *[space.fade_cloud(c, 0.55, run_time=1.4) for c in clouds],
         )
 
-        label = theme.formula("M  =  the set of all these representatives", size=34)
-        label.to_edge(DOWN, buff=1.25)
+        label = theme.formula(r"M \;=\; \text{the set of all these representatives}", size=34)
+        theme.foot(label)
         self.play(Write(label, run_time=1.4))
         self.wait(1.2)
 
         key = theme.formula(
-            "every point p  is  p = ρ(m)   for a unique m ∈ M  and a unique ρ ∈ G",
+            r"\text{every point } p \text{ is } p = \rho(m)"
+            r"\text{ for a unique } m \in M \text{ and a unique } \rho \in G",
             size=30,
             color=theme.GOLD,
         )
-        key.to_edge(DOWN, buff=0.5)
+        theme.foot(key)
         self.play(Write(key, run_time=2.0))
         self.wait(1.0)
 
@@ -160,7 +161,7 @@ class S09ShoesSocks(Scene):
         theme.apply_defaults(self)
 
         head = theme.body("infinitely many pairs of shoes", size=32, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.7)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.7))
 
         boxes = VGroup()
@@ -177,8 +178,11 @@ class S09ShoesSocks(Scene):
         self.play(FadeIn(boxes, lag_ratio=0.06, run_time=1.2))
         self.wait(0.6)
 
+        # both lines are placed before either is played, so nothing shifts once
+        # it is on screen
         rule = theme.body("“I take the left one.”", size=34, color=theme.GOLD)
-        rule.to_edge(DOWN, buff=0.55)
+        note = theme.caption("one sentence, and the choice is made everywhere at once", size=26)
+        block = theme.foot(VGroup(note, rule).arrange(DOWN, buff=0.20))
         self.play(
             Write(rule, run_time=1.0),
             *[
@@ -188,16 +192,14 @@ class S09ShoesSocks(Scene):
                 for shoe in lefts
             ],
         )
-        note = theme.caption("one sentence, and the choice is made everywhere at once", size=24)
-        note.next_to(rule, UP, buff=0.28)
         self.play(FadeIn(note, run_time=0.7))
         self.wait(2.0)
-        self.play(FadeOut(VGroup(boxes, rule, note, head), run_time=0.7))
+        self.play(FadeOut(VGroup(boxes, block, head), run_time=0.7))
 
         # -- socks --------------------------------------------------------
         head2 = theme.body("infinitely many drawers of identical socks", size=32,
                            color=theme.INK_DIM)
-        head2.to_edge(UP, buff=0.7)
+        theme.head(head2)
         self.play(FadeIn(head2, run_time=0.7))
 
         drawers = VGroup()
@@ -214,7 +216,7 @@ class S09ShoesSocks(Scene):
         self.wait(1.0)
 
         nothing = theme.body("there is no left one.", size=34, color=theme.REFUSE)
-        nothing.to_edge(DOWN, buff=0.55)
+        theme.foot(nothing)
         self.play(Write(nothing, run_time=1.0))
         self.wait(1.2)
 
@@ -232,28 +234,27 @@ class S09AxiomCard(Scene):
         theme.apply_defaults(self)
 
         title = theme.display("the axiom of choice", size=54, color=theme.CHOICE)
-        title.to_edge(UP, buff=1.1)
+        theme.head(title)
         statement = theme.body(
             "For any family of non-empty sets, there is a function picking one element from each.",
             size=32,
         )
-        statement.next_to(title, DOWN, buff=0.75)
-        if statement.width > 12.5:
-            statement.scale_to_fit_width(12.5)
-        self.play(Write(title, run_time=1.0))
-        self.play(Write(statement, run_time=2.2))
-        self.wait(0.8)
-
         caveats = VGroup(
             theme.body("It asserts that the choice exists.", size=32, color=theme.INK_DIM),
             theme.body("It does not say how to make it.", size=32, color=theme.INK_DIM),
             theme.body("No recipe will ever exist — that has been proved.", size=32,
                        color=theme.REFUSE),
         ).arrange(DOWN, buff=0.34)
-        caveats.next_to(statement, DOWN, buff=0.9)
+        # the whole card is placed at once, so the statement does not move when
+        # the caveats arrive under it
+        card = theme.stage(VGroup(statement, caveats).arrange(DOWN, buff=0.75))
+
+        self.play(Write(title, run_time=1.0))
+        self.play(Write(statement, run_time=2.2))
+        self.wait(0.8)
         anim.write_lines(self, caveats, per_line=1.2, lag=0.8)
         self.wait(2.2)
-        self.play(FadeOut(VGroup(title, statement, caveats), run_time=0.8))
+        self.play(FadeOut(VGroup(title, card), run_time=0.8))
 
 
 class S09ImpossibleHand(Scene):
@@ -326,7 +327,7 @@ class S09ImpossibleHand(Scene):
         self.wait(2.4)
 
         note = theme.caption("this hand does not exist.  that is exactly the point.", size=24)
-        note.to_edge(DOWN, buff=0.4)
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.8))
         self.wait(2.0)
         self.play(FadeOut(VGroup(shelves, ghosts, note), run_time=1.0))

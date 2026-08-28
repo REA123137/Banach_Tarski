@@ -1,19 +1,25 @@
 """Visual identity for *Two Balls* — the Banach-Tarski film.
 
-Everything in the film is drawn on pure black. The palette is deliberately
-small: four letter colours (one per generator of the free group), one warm
-off-white for prose, one red reserved exclusively for refusal, and a single
-grey used for anything that is a ghost of something else.
+Everything is drawn on pure black and set in LaTeX's Computer Modern, through
+``Tex`` and ``MathTex``: the film is a mathematics film and it should be set in
+the type mathematics is set in.
 
-No LaTeX is required anywhere: all mathematics is set in Unicode with the
-helpers below, so the project renders on a bare machine.
+The palette is deliberately small: four letter colours (one per generator of
+the free group), one warm off-white for prose, one red reserved exclusively for
+refusal, and a single grey for anything that is a ghost of something else.
+
+The second half of this module is the layout system.  The frame is divided into
+three bands — a head band for titles and formulas, a stage band for geometry,
+a foot band for captions — and every placement helper *fits* its argument into
+its band, shrinking it if it does not fit.  Overlap is therefore not something
+to be checked for afterwards; it cannot be constructed.
 """
 
 from __future__ import annotations
 
-import subprocess
-from functools import lru_cache
+import re
 
+import numpy as np
 from manim import (
     BLACK,
     DOWN,
@@ -23,10 +29,10 @@ from manim import (
     UP,
     Dot,
     Line,
-    MarkupText,
+    MathTex,
     Mobject,
     Rectangle,
-    Text,
+    Tex,
     VGroup,
     VMobject,
     config,
@@ -62,106 +68,175 @@ CHOCO = "#7A4A2B"
 CHOCO_LIGHT = "#A9683C"
 
 # --------------------------------------------------------------------------
-# Type
+# Prose into LaTeX
 # --------------------------------------------------------------------------
 
-_FONT_WISHLIST = {
-    "display": ("Inter Display", "Inter", "Lato", "DejaVu Sans"),
-    "body": ("Inter", "Lato", "DejaVu Sans"),
-    "mono": ("DejaVu Sans Mono", "Liberation Mono", "monospace"),
-    "serif": ("EB Garamond", "Bitstream Charter", "DejaVu Serif"),
+# The script is written in Unicode; LaTeX is what actually sets it.  These are
+# every non-ASCII character the film uses, and nothing else is allowed through.
+_LATEX_SPECIAL = {
+    "\\": r"\textbackslash{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "~": r"\textasciitilde{}",
+    "^": r"\textasciicircum{}",
+}
+
+_UNICODE_PAIRS = [
+    ("⁻¹", "$^{-1}$"),
+    ("⁻ⁿ", "$^{-n}$"),
+]
+
+_UNICODE = {
+    # punctuation and marks
+    "—": "---", "–": "--", "…": r"\dots{}", "·": r"$\cdot$",
+    "’": "'", "“": "``", "”": "''", "é": r"\'e", "°": r"$^\circ$",
+    "′": "$'$", "⁄": "/", "●": r"$\bullet$",
+    # exponents and indices
+    "⁰": "$^0$", "¹": "$^1$", "²": "$^2$", "³": "$^3$", "ⁿ": "$^n$",
+    "₀": "$_0$", "₁": "$_1$", "₂": "$_2$", "₃": "$_3$", "₄": "$_4$",
+    "ᵢ": "$_i$", "ⱼ": "$_j$",
+    # greek
+    "θ": r"$\theta$", "ρ": r"$\rho$", "μ": r"$\mu$", "α": r"$\alpha$",
+    # relations and operators
+    "⊔": r"$\sqcup$", "∪": r"$\cup$", "∩": r"$\cap$", "∖": r"$\setminus$",
+    "∈": r"$\in$", "∼": r"$\sim$", "∅": r"$\emptyset$", "≈": r"$\approx$",
+    "≠": r"$\neq$", "≤": r"$\leq$", "≥": r"$\geq$", "±": r"$\pm$",
+    "×": r"$\times$", "−": "$-$", "→": r"$\rightarrow$", "√": r"$\sqrt{\,}$",
+    "⟨": r"$\langle$", "⟩": r"$\rangle$", "⋯": r"$\cdots$",
 }
 
 
-@lru_cache(maxsize=1)
-def _installed_families() -> frozenset[str]:
-    try:
-        out = subprocess.run(
-            ["fc-list", ":", "family"], capture_output=True, text=True, timeout=10
-        ).stdout
-    except Exception:  # pragma: no cover - fontconfig missing
-        return frozenset()
-    families = set()
-    for line in out.splitlines():
-        for name in line.split(","):
-            families.add(name.strip())
-    return frozenset(families)
+def latex_escape(text: str) -> str:
+    """Turn a line of the script into LaTeX that sets exactly what it says.
 
-
-@lru_cache(maxsize=8)
-def font(role: str = "body") -> str:
-    """Best available family for a role, degrading to DejaVu Sans."""
-    installed = _installed_families()
-    for candidate in _FONT_WISHLIST[role]:
-        if not installed or candidate in installed:
-            return candidate
-    return "DejaVu Sans"
+    Anything that would be a LaTeX control sequence is escaped first; only then
+    are the Unicode symbols replaced by real mathematics, so the substitutions
+    can safely introduce ``$`` and braces of their own.
+    """
+    out = "".join(_LATEX_SPECIAL.get(ch, ch) for ch in text)
+    for pair, repl in _UNICODE_PAIRS:
+        out = out.replace(pair, repl)
+    out = "".join(_UNICODE.get(ch, ch) for ch in out)
+    # adjacent maths groups become one, so spacing stays even
+    out = out.replace("$$", "")
+    if any(ord(ch) > 127 for ch in out):
+        stray = sorted({ch for ch in out if ord(ch) > 127})
+        raise ValueError(f"no LaTeX for {stray!r} in {text!r}")
+    return out
 
 
 # --------------------------------------------------------------------------
-# Text helpers
+# Type
 # --------------------------------------------------------------------------
 
-def body(text: str, size: float = 34, color: str = INK, **kwargs) -> Text:
-    return Text(text, font=font("body"), font_size=size, color=color, **kwargs)
+MAX_WIDTH = config.frame_width - 1.3      # nothing ever touches the side edges
+
+# LaTeX sets a good deal smaller than a hinted screen face at the same nominal
+# size, so every size in the scenes is read through this factor.  Change it
+# here and the whole film re-sizes together.
+TEX_SCALE = 1.80
 
 
-def display(text: str, size: float = 62, color: str = INK, **kwargs) -> Text:
-    return Text(
-        text, font=font("display"), font_size=size, color=color, weight="MEDIUM", **kwargs
+def _size(size: float) -> float:
+    return size * TEX_SCALE
+
+
+def _fit(mob: Mobject, max_width: float | None = None) -> Mobject:
+    """No line is ever allowed to run off the frame."""
+    limit = MAX_WIDTH if max_width is None else max_width
+    if mob.width > limit:
+        mob.scale_to_fit_width(limit)
+    return mob
+
+
+def body(text: str, size: float = 34, color: str = INK, width: float | None = None, **kw) -> Tex:
+    return _fit(Tex(latex_escape(text), font_size=_size(size), color=color, **kw), width)
+
+
+def display(text: str, size: float = 62, color: str = INK, width: float | None = None, **kw) -> Tex:
+    return _fit(
+        Tex(r"\textbf{" + latex_escape(text) + "}", font_size=_size(size), color=color, **kw),
+        width,
     )
 
 
-def mono(text: str, size: float = 38, color: str = INK, **kwargs) -> Text:
-    return Text(text, font=font("mono"), font_size=size, color=color, **kwargs)
-
-
-def serif(text: str, size: float = 34, color: str = INK, **kwargs) -> Text:
-    return Text(text, font=font("serif"), font_size=size, color=color, **kwargs)
-
-
-def rich(markup: str, size: float = 34, color: str = INK, **kwargs) -> MarkupText:
-    """Pango markup — used whenever one line needs several colours."""
-    return MarkupText(markup, font=font("body"), font_size=size, color=color, **kwargs)
-
-
-def formula(text: str, size: float = 44, color: str = INK, **kwargs) -> Text:
-    """A display formula.  Unicode only, set in the body face at a wider tracking."""
-    return Text(
-        text, font=font("body"), font_size=size, color=color, **kwargs
+def mono(text: str, size: float = 38, color: str = INK, width: float | None = None, **kw) -> Tex:
+    return _fit(
+        Tex(r"\texttt{" + latex_escape(text) + "}", font_size=_size(size), color=color, **kw),
+        width,
     )
 
 
-def caption(text: str, size: float = 24, color: str = INK_DIM) -> Text:
-    return Text(text, font=font("body"), font_size=size, color=color)
+def serif(text: str, size: float = 34, color: str = INK, width: float | None = None, **kw) -> Tex:
+    return body(text, size=size, color=color, width=width, **kw)
 
 
-def scene_label(index: int, title: str) -> VGroup:
-    """The discreet running head every scene carries in the top left corner."""
-    num = Text(f"{index:02d}", font=font("mono"), font_size=20, color=GHOST)
-    name = Text(title.upper(), font=font("body"), font_size=20, color=INK_DIM)
-    name.set_opacity(0.55)
-    group = VGroup(num, name).arrange(RIGHT, buff=0.28)
-    group.to_corner(UP + LEFT, buff=0.5)
-    return group
+def caption(text: str, size: float = 26, color: str = INK_DIM, width: float | None = None) -> Tex:
+    return _fit(
+        Tex(r"\textit{" + latex_escape(text) + "}", font_size=_size(size), color=color), width
+    )
+
+
+def formula(tex: str, size: float = 44, color: str = INK, width: float | None = None, **kw) -> MathTex:
+    """Mathematics, written as mathematics.  ``tex`` is LaTeX, not Unicode.
+
+    A stray Unicode symbol here would reach LaTeX as itself and fail deep
+    inside a compile log, so it is caught at the call instead.
+    """
+    if any(ord(ch) > 127 for ch in tex):
+        stray = sorted({ch for ch in tex if ord(ch) > 127})
+        raise ValueError(f"formula() takes LaTeX; {stray!r} is Unicode, in {tex!r}")
+    return _fit(MathTex(tex, font_size=_size(size), color=color, **kw), width)
+
+
+def prose_math(text: str, *maths: str, size: float = 32, color: str = INK,
+               width: float | None = None) -> Tex:
+    """A line of prose with mathematics set into it.
+
+    ``text`` is the script's own Unicode, with ``{}`` marking each slot;
+    ``maths`` are LaTeX.  This is how a caption says "put a in front of every
+    word of S(a^{-1})" without the LaTeX being escaped into literal characters.
+    """
+    body_tex = latex_escape(text)
+    for m in maths:
+        body_tex = body_tex.replace(r"\{\}", f"${m}$", 1)
+    return _fit(Tex(body_tex, font_size=_size(size), color=color), width)
+
+
+def highlighted(text: str, word: str, size: float = 36, color: str = INK,
+                accent: str = GOLD) -> Tex:
+    """A line of prose with one word set apart — used where a term is defined."""
+    piece = latex_escape(word)
+    line = Tex(
+        latex_escape(text), font_size=_size(size), color=color, substrings_to_isolate=[piece]
+    )
+    line.set_color_by_tex(piece, accent)
+    return _fit(line)
 
 
 # --------------------------------------------------------------------------
 # Word typography
 # --------------------------------------------------------------------------
 
-SUP_INV = "⁻¹"  # superscript -1
-
-
 def letter_glyph(letter: str) -> str:
-    """'A' -> 'a⁻¹', 'a' -> 'a'."""
+    """The LaTeX for one letter: ``A`` -> ``a^{-1}``."""
     if letter == "":
         return "e"
-    return letter.lower() + (SUP_INV if letter.isupper() else "")
+    return letter.lower() + ("^{-1}" if letter.isupper() else "")
 
 
 def word_glyph(word: str) -> str:
     return "".join(letter_glyph(c) for c in word) if word else "e"
+
+
+def word_tex(word: str, size: float = 38, color: str = INK) -> MathTex:
+    """A whole word as one piece of mathematics."""
+    return MathTex(word_glyph(word), font_size=_size(size), color=color)
 
 
 def word_mobject(
@@ -171,20 +246,128 @@ def word_mobject(
     face: str = "mono",
     spaced: bool = False,
 ) -> VGroup:
-    """A word of F2 as a row of individually addressable letter mobjects.
+    """A word of F2 as a row of individually addressable letters.
 
-    Returned as a ``VGroup`` so that a single letter can be faded, flashed or
-    made to collide with its neighbour — which is what most of the film does.
+    Returned as a ``VGroup`` so a single letter can be faded, flashed or made
+    to collide with its neighbour — which is what most of the film does.
     """
-    maker = {"mono": mono, "body": body, "serif": serif}[face]
     if not word:
-        glyph = maker("e", size=size, color=color or C_E)
-        return VGroup(glyph)
+        return VGroup(MathTex("e", font_size=_size(size), color=color or C_E))
     letters = VGroup(
-        *[maker(letter_glyph(c), size=size, color=color or LETTER_COLORS[c]) for c in word]
+        *[
+            MathTex(letter_glyph(c), font_size=_size(size), color=color or LETTER_COLORS[c])
+            for c in word
+        ]
     )
-    letters.arrange(RIGHT, buff=size * (0.010 if not spaced else 0.006) + (0.10 if spaced else 0.02))
+    letters.arrange(RIGHT, buff=0.18 if spaced else 0.10, aligned_edge=DOWN)
     return letters
+
+
+# --------------------------------------------------------------------------
+# The three bands
+# --------------------------------------------------------------------------
+
+FRAME_W = config.frame_width          # 14.22
+FRAME_H = config.frame_height         # 8.00
+TOP_EDGE = FRAME_H / 2
+BOTTOM_EDGE = -FRAME_H / 2
+
+BAND = 1.50            # height reserved at the top and at the bottom for type
+MARGIN = 0.26          # breathing room against the frame edge
+STAGE_TOP = TOP_EDGE - BAND
+STAGE_BOTTOM = BOTTOM_EDGE + BAND
+STAGE_HALF = STAGE_TOP                 # geometry lives in |y| <= STAGE_HALF
+STAGE_HEIGHT = STAGE_TOP - STAGE_BOTTOM
+
+
+def head(mob: Mobject, gap: float = MARGIN) -> Mobject:
+    """Put a title, a formula or a running head in the top band.
+
+    If it is too tall for the band it is scaled until it fits, so it can never
+    reach down into the geometry.
+    """
+    room = BAND - gap - 0.10
+    if mob.height > room:
+        mob.scale_to_fit_height(room)
+    _fit(mob)
+    mob.move_to(np.array([0.0, TOP_EDGE - gap - mob.height / 2, 0.0]))
+    return mob
+
+
+def foot(mob: Mobject, gap: float = MARGIN) -> Mobject:
+    """Put a caption, a verdict or a bridge in the bottom band."""
+    room = BAND - gap - 0.10
+    if mob.height > room:
+        mob.scale_to_fit_height(room)
+    _fit(mob)
+    mob.move_to(np.array([0.0, BOTTOM_EDGE + gap + mob.height / 2, 0.0]))
+    return mob
+
+
+def stage(mob: Mobject, margin: float = 0.18, width: float | None = None) -> Mobject:
+    """Centre a drawing in the middle band, scaled to fit it."""
+    limit_h = STAGE_HEIGHT - 2 * margin
+    limit_w = (MAX_WIDTH if width is None else width)
+    if mob.height > limit_h:
+        mob.scale_to_fit_height(limit_h)
+    if mob.width > limit_w:
+        mob.scale_to_fit_width(limit_w)
+    mob.move_to(ORIGIN)
+    return mob
+
+
+def stage_scale(radius: float = 1.0, margin: float = 0.22) -> float:
+    """The largest view scale at which a sphere of ``radius`` stays in the band."""
+    return (STAGE_HALF - margin) / radius
+
+
+def side_slot(side: float, mob: Mobject, width: float = 4.4) -> Mobject:
+    """Park a legend or a label in the left or right third, clear of the middle."""
+    if mob.width > width:
+        mob.scale_to_fit_width(width)
+    x = side * (FRAME_W / 2 - MARGIN - mob.width / 2)
+    mob.move_to(np.array([x, 0.0, 0.0]))
+    return mob
+
+
+def stage_corner(mob: Mobject, x_sign: float = 1.0, y_sign: float = 1.0,
+                 gap: float = 0.20) -> Mobject:
+    """Tuck a running readout into a corner of the stage band.
+
+    The frame corners belong to the head and foot bands; a counter parked
+    there would sooner or later meet a title.
+    """
+    x = x_sign * (FRAME_W / 2 - MARGIN - mob.width / 2)
+    y = y_sign * (STAGE_HALF - gap - mob.height / 2)
+    mob.move_to(np.array([x, y, 0.0]))
+    return mob
+
+
+def overlaps(a: Mobject, b: Mobject, pad: float = 0.06) -> bool:
+    """Do two things share any of the frame?  Bounding boxes, deliberately."""
+    if not a.has_points() or not b.has_points():
+        return False
+    ax0, ax1 = a.get_left()[0] - pad, a.get_right()[0] + pad
+    ay0, ay1 = a.get_bottom()[1] - pad, a.get_top()[1] + pad
+    bx0, bx1 = b.get_left()[0], b.get_right()[0]
+    by0, by1 = b.get_bottom()[1], b.get_top()[1]
+    return not (ax1 < bx0 or bx1 < ax0 or ay1 < by0 or by1 < ay0)
+
+
+def assert_clear(*mobs: Mobject) -> None:
+    """Fail loudly at construction time if two things are on top of each other.
+
+    Cheap enough to leave switched on: a scene that collides refuses to render
+    rather than shipping a frame with a caption written across a sphere.
+    """
+    items = [m for m in mobs if m is not None and m.has_points()]
+    for i, a in enumerate(items):
+        for b in items[i + 1 :]:
+            if overlaps(a, b):
+                raise AssertionError(
+                    f"these two overlap: {a} at {a.get_center()[:2]} "
+                    f"and {b} at {b.get_center()[:2]}"
+                )
 
 
 # --------------------------------------------------------------------------
@@ -207,10 +390,7 @@ def panel(width: float, height: float, fill: str = GHOST_SOFT, stroke: str = GHO
 
 
 def glow(mob: Mobject, color: str, layers: int = 6, spread: float = 6.0, opacity: float = 0.055):
-    """A cheap bloom: concentric copies of a stroke, each fainter and fatter.
-
-    Used sparingly — on the two balls, on the closing circle, on the theorem.
-    """
+    """A cheap bloom: concentric copies of a stroke, each fainter and fatter."""
     halo = VGroup()
     for i in range(layers):
         ring = mob.copy()
@@ -221,34 +401,13 @@ def glow(mob: Mobject, color: str, layers: int = 6, spread: float = 6.0, opacity
     return halo
 
 
-def vignette(strength: float = 0.55) -> VGroup:
-    """Four soft black bands that keep the eye in the middle of the frame."""
-    bands = VGroup()
-    w, h = config.frame_width, config.frame_height
-    for direction, size in ((UP, h), (DOWN, h), (LEFT, w), (RIGHT, w)):
-        for i in range(8):
-            t = i / 8
-            band = Rectangle(
-                width=w if direction[1] else w * 0.14,
-                height=h if direction[0] else h * 0.14,
-                fill_color=BLACK,
-                fill_opacity=strength / 8 * (1 - t),
-                stroke_width=0,
-            )
-            band.move_to(ORIGIN).shift(direction * (0.5 * (h if direction[1] else w) * (0.5 + 0.06 * i)))
-            bands.add(band)
-    return bands
-
-
 def star_field(n: int = 90, seed: int = 7) -> VGroup:
     """A faint dust of dots.  The film's black is never quite empty."""
-    import numpy as np
-
     rng = np.random.default_rng(seed)
     dots = VGroup()
     for _ in range(n):
-        x = rng.uniform(-config.frame_width / 2, config.frame_width / 2)
-        y = rng.uniform(-config.frame_height / 2, config.frame_height / 2)
+        x = rng.uniform(-FRAME_W / 2, FRAME_W / 2)
+        y = rng.uniform(-FRAME_H / 2, FRAME_H / 2)
         d = Dot(point=[x, y, 0], radius=rng.uniform(0.004, 0.014), color=INK)
         d.set_opacity(rng.uniform(0.04, 0.18))
         dots.add(d)

@@ -45,30 +45,30 @@ class S10Partition(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
-        title = theme.body("a partition of the ball", size=34, color=theme.INK_DIM)
-        title.to_edge(UP, buff=0.9)
+        title = theme.head(theme.body("a partition of the ball", size=34, color=theme.INK_DIM))
         formula = theme.formula(
-            "L  =  P₁ ⊔ P₂ ⊔ P₃ ⊔ P₄        with   Pᵢ ∩ Pⱼ = ∅   (i ≠ j)", size=38
+            r"L \;=\; P_1 \sqcup P_2 \sqcup P_3 \sqcup P_4"
+            r"\qquad \text{with}\quad P_i \cap P_j = \emptyset \;\; (i \neq j)",
+            size=38,
         )
-        formula.next_to(title, DOWN, buff=0.55)
-        self.play(FadeIn(title, run_time=0.7), Write(formula, run_time=2.0))
-
         plain = theme.body("pieces that do not overlap, and that together cover everything",
                            size=30, color=theme.INK_DIM)
-        plain.next_to(formula, DOWN, buff=0.5)
-        self.play(FadeIn(plain, run_time=0.8))
-        self.wait(0.8)
-
         danger = VGroup(
             theme.body("A point must be writable in exactly one way", size=32),
             theme.body("as a rotation applied to a representative.", size=32),
             theme.body("Two rotations giving the same point would put it in two pieces at once.",
                        size=30, color=theme.REFUSE),
         ).arrange(DOWN, buff=0.32)
-        danger.next_to(plain, DOWN, buff=0.9)
+        # the whole block is laid out before any of it is played, so no line
+        # moves once the viewer has read it
+        block = theme.stage(VGroup(formula, plain, danger).arrange(DOWN, buff=0.55))
+
+        self.play(FadeIn(title, run_time=0.7), Write(formula, run_time=2.0))
+        self.play(FadeIn(plain, run_time=0.8))
+        self.wait(0.8)
         anim.write_lines(self, danger, per_line=1.2, lag=0.75)
         self.wait(2.0)
-        self.play(FadeOut(VGroup(title, formula, plain, danger), run_time=0.8))
+        self.play(FadeOut(VGroup(title, block), run_time=0.8))
 
 
 class S10FixedPoints(Scene):
@@ -85,7 +85,7 @@ class S10FixedPoints(Scene):
             stage.add(wire)
 
         axis_vec = np.array([0.0, 0.0, 1.0])
-        axis_line = space.Wire(space.axis_segment(axis_vec, 1.45), color=theme.INK_DIM,
+        axis_line = space.Wire(space.axis_segment(axis_vec, 1.12), color=theme.INK_DIM,
                                width=1.6, closed=False)
         axis_line.mobject.set_stroke(opacity=0.45)
         stage.add(axis_line)
@@ -93,10 +93,11 @@ class S10FixedPoints(Scene):
                  space.Marker(-axis_vec, color=theme.REFUSE, radius=0.085, halo=3.2)]
         stage.add(*poles)
         stage.install(self)
+        stage.fit(spread=1.12)
 
         head = theme.body("the sphere turns — the two points on the axis do not",
                           size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.6)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
 
         # the sphere really turns: the shell's own points are rotated
@@ -114,12 +115,12 @@ class S10FixedPoints(Scene):
         self.play(FadeOut(head, run_time=0.5))
         head2 = theme.body("and every rotation of G has its own pair", size=30,
                            color=theme.INK_DIM)
-        head2.to_edge(UP, buff=0.6)
+        theme.head(head2)
         self.play(FadeIn(head2, run_time=0.6))
 
         extra = []
         for vec in fixed_point_axes(3)[:22]:
-            line = space.Wire(space.axis_segment(vec, 1.4), color=theme.GHOST, width=1.0,
+            line = space.Wire(space.axis_segment(vec, 1.10), color=theme.GHOST, width=1.0,
                               closed=False)
             line.mobject.set_stroke(opacity=0.22)
             extra.append(line)
@@ -146,30 +147,31 @@ class S10Removed(Scene):
         theme.apply_defaults(self)
 
         lines = VGroup(
-            theme.formula("L  =  { (x, y, z) :  x² + y² + z² ≤ 1 }", size=36),
-            theme.formula("L₀  =  L ∖ { (0, 0, 0) }", size=36),
-            theme.formula("D  =  { p ∈ L₀ :  ρ(p) = p  for some ρ ∈ G,  ρ ≠ Id }", size=36),
+            theme.formula(r"L \;=\; \{\,(x,y,z) \;:\; x^2 + y^2 + z^2 \leq 1\,\}", size=36),
+            theme.formula(r"L_0 \;=\; L \setminus \{(0,0,0)\}", size=36),
+            theme.formula(
+                r"D \;=\; \{\, p \in L_0 \;:\; \rho(p) = p \text{ for some } "
+                r"\rho \in G,\; \rho \neq \mathrm{Id} \,\}",
+                size=36,
+            ),
         ).arrange(DOWN, buff=0.55)
-        lines.move_to(UP * 0.55)
-        anim.write_lines(self, lines, per_line=1.6, lag=0.85)
-        self.wait(1.0)
+        work = theme.formula(r"\text{we work on}\quad L_0 \setminus D", size=44,
+                             color=theme.GOLD)
+        block = theme.stage(VGroup(lines, work).arrange(DOWN, buff=0.75))
 
-        work = theme.formula("we work on   L₀ ∖ D", size=44, color=theme.GOLD)
-        work.next_to(lines, DOWN, buff=0.95)
-        self.play(Write(work, run_time=1.2))
-
-        promise = theme.body(
-            "and I promise you now: we will get all of it back, the centre and the axes,"
-            "  before the end.",
+        promise = theme.foot(theme.body(
+            "and I promise you now: we will get all of it back, "
+            "the centre and the axes, before the end.",
             size=28,
             color=theme.INK_DIM,
-        )
-        if promise.width > 12.6:
-            promise.scale_to_fit_width(12.6)
-        promise.to_edge(DOWN, buff=0.6)
+        ))
+
+        anim.write_lines(self, lines, per_line=1.6, lag=0.85)
+        self.wait(1.0)
+        self.play(Write(work, run_time=1.2))
         self.play(FadeIn(promise, run_time=1.0))
         self.wait(2.4)
-        self.play(FadeOut(VGroup(lines, work, promise), run_time=0.8))
+        self.play(FadeOut(VGroup(block, promise), run_time=0.8))
 
 
 class S10LongExposure(Scene):
@@ -202,7 +204,7 @@ class S10LongExposure(Scene):
         stage.install(self)
 
         head = theme.caption("one rotation · 30-second exposure", size=24)
-        head.to_edge(UP, buff=0.5)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
         self.play(stage.orbit(d_yaw=0.8, run_time=3.5))
         self.wait(0.6)
@@ -210,7 +212,7 @@ class S10LongExposure(Scene):
         # then twenty rotations at once: a sky of star trails
         self.play(FadeOut(head, run_time=0.4))
         head2 = theme.caption("twenty rotations · every point streaks, a few stay still", size=24)
-        head2.to_edge(UP, buff=0.5)
+        theme.head(head2)
         self.play(FadeIn(head2, run_time=0.6))
 
         more = []
@@ -233,7 +235,7 @@ class S10LongExposure(Scene):
 
         note = theme.body("the idea of a fixed point, without a word", size=28,
                           color=theme.INK_DIM)
-        note.to_edge(DOWN, buff=0.5)
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.9))
         self.wait(2.0)
         self.play(FadeOut(VGroup(head2, note), run_time=0.8))

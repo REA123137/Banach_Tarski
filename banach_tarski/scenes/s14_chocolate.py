@@ -119,7 +119,7 @@ class S14Chocolate(Scene):
         # count them
         numbers = VGroup()
         for i, cell in enumerate(rebuilt.squares):
-            tag = theme.mono(str(i + 1), size=20, color="#F0E4D8").move_to(cell)
+            tag = theme.formula(str(i + 1), size=24, color="#F0E4D8").move_to(cell)
             numbers.add(tag)
         self.play(
             LaggedStart(*[FadeIn(t, run_time=0.16) for t in numbers], lag_ratio=0.55)
@@ -128,7 +128,7 @@ class S14Chocolate(Scene):
 
         self.play(FadeIn(spare, scale=1.4, run_time=0.9))
         tally = theme.body("twenty-four squares.  and one left over.", size=34, color=theme.GOLD)
-        tally.to_edge(DOWN, buff=0.7)
+        theme.foot(tally)
         self.play(Write(tally, run_time=1.4))
         self.wait(2.2)
         self.play(FadeOut(VGroup(rebuilt, numbers, spare, tally), run_time=0.9))
@@ -140,51 +140,53 @@ class S14Rigged(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
+        # the bar takes the left of the stage band, the magnifier the right,
+        # and the reading goes to the foot band: three places, no argument
         before = motifs.chocolate_bar(COLS, ROWS, CELL)
-        before.move_to(UP * 1.05)
         ghost = Rectangle(
             width=COLS * CELL, height=ROWS * CELL, color=theme.INK, stroke_width=2.0
-        ).move_to(before)
+        )
         after = motifs.chocolate_bar(COLS, ROWS, CELL)
-        after.scale(SHRINK).move_to(before)
+        after.scale(SHRINK)
+        for mob in (before, ghost, after):
+            mob.move_to(np.array([-2.55, 0.0, 0.0]))
+
+        head = theme.head(theme.body("before and after, superimposed", size=30,
+                                     color=theme.INK_DIM))
 
         self.play(FadeIn(before, run_time=0.9))
         self.wait(0.5)
-        self.play(FadeOut(before, run_time=0.6), FadeIn(after, run_time=0.6), Create(ghost, run_time=0.8))
-
-        head = theme.body("before and after, superimposed", size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.55)
+        self.play(FadeOut(before, run_time=0.6), FadeIn(after, run_time=0.6),
+                  Create(ghost, run_time=0.8))
         self.play(FadeIn(head, run_time=0.7))
         self.wait(1.0)
 
-        # tenfold magnification at the right edge
-        edge = ghost.get_right() + DOWN * 0.0
-        lens = Circle(radius=0.55, color=theme.INK_DIM, stroke_width=2.4).move_to(edge)
+        # tenfold magnification at the right edge of the bar
+        lens = Circle(radius=0.55, color=theme.INK_DIM, stroke_width=2.4)
+        lens.move_to(ghost.get_right())
         self.play(Create(lens, run_time=0.7))
 
-        inset = VGroup()
-        frame = Circle(radius=1.20, color=theme.INK_DIM, stroke_width=2.4)
+        frame = Circle(radius=1.35, color=theme.INK_DIM, stroke_width=2.4)
         gap = float((1 - SHRINK) * COLS * CELL / 2 * 10)
-        real_edge = Line(UP * 1.2, DOWN * 1.2, color=theme.INK, stroke_width=3.0)
-        rebuilt_edge = Line(UP * 1.2, DOWN * 1.2, color=theme.CHOCO_LIGHT, stroke_width=3.0)
-        rebuilt_edge.shift(LEFT * min(gap, 1.1))
+        real_edge = Line(UP * 1.25, DOWN * 1.25, color=theme.INK, stroke_width=3.0)
+        rebuilt_edge = Line(UP * 1.25, DOWN * 1.25, color=theme.CHOCO_LIGHT, stroke_width=3.0)
+        rebuilt_edge.shift(LEFT * min(gap, 1.15))
         measure = Line(rebuilt_edge.get_top(), real_edge.get_top(), color=theme.REFUSE,
-                       stroke_width=2.4).shift(DOWN * 0.15)
-        inset.add(frame, real_edge, rebuilt_edge, measure)
-        inset.move_to(DOWN * 2.20 + RIGHT * 4.95)
-        tag = theme.caption("× 10", size=22).next_to(frame, UP, buff=0.15)
-        inset.add(tag)
+                       stroke_width=2.4).shift(DOWN * 0.18)
+        tag = theme.caption("× 10", size=24).next_to(frame, UP, buff=0.14)
+        inset = VGroup(frame, real_edge, rebuilt_edge, measure, tag)
+        inset.move_to(np.array([4.35, 0.0, 0.0]))
 
-        link = Line(lens.get_center(), frame.get_center(), color=theme.GHOST, stroke_width=1.2)
+        link = Line(lens.get_center(), frame.get_left(), color=theme.GHOST, stroke_width=1.2)
         self.play(Create(link, run_time=0.5), FadeIn(inset, run_time=0.9))
         self.wait(0.8)
 
         verdict = VGroup(
-            theme.body("every row has lost a hair's width", size=30),
-            theme.body("twenty-four hairs end to end make exactly one square", size=30,
+            theme.body("every row has lost a hair's width", size=28),
+            theme.body("twenty-four hairs end to end make exactly one square", size=28,
                        color=theme.GOLD),
-        ).arrange(DOWN, buff=0.28)
-        verdict.to_corner(DOWN + LEFT, buff=0.55)
+        ).arrange(DOWN, buff=0.24)
+        theme.foot(verdict)
         anim.write_lines(self, verdict, per_line=1.3, lag=0.8)
         self.wait(1.2)
 
@@ -195,6 +197,7 @@ class S14Rigged(Scene):
         self.wait(2.2)
         self.play(FadeOut(VGroup(after, ghost, lens, inset, link, verdict, moral),
                           run_time=0.9))
+        theme.assert_clear(after, inset, verdict, moral)
 
 
 class S14Volume(Scene):
@@ -205,20 +208,20 @@ class S14Volume(Scene):
 
         head = theme.body("a volume attaches a number to a set of points, obeying two rules",
                           size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.8)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.9))
 
         rules = VGroup(
-            theme.formula("μ(X ⊔ Y)  =  μ(X) + μ(Y)", size=42),
-            theme.formula("μ(ρ(X))  =  μ(X)", size=42),
+            theme.formula(r"\mu(X \sqcup Y) \;=\; \mu(X) + \mu(Y)", size=42),
+            theme.formula(r"\mu(\rho(X)) \;=\; \mu(X)", size=42),
         ).arrange(DOWN, buff=0.5)
-        rules.next_to(head, DOWN, buff=0.8)
+        theme.stage(rules)
         anim.write_lines(self, rules, per_line=1.4, lag=0.8)
         self.wait(0.8)
 
         glosses = VGroup(
-            theme.caption("the volumes of two disjoint pieces add up", size=24),
-            theme.caption("moving a piece does not change its volume", size=24),
+            theme.caption("the volumes of two disjoint pieces add up", size=26),
+            theme.caption("moving a piece does not change its volume", size=26),
         )
         for gloss, rule in zip(glosses, rules):
             gloss.next_to(rule, DOWN, buff=0.18)
@@ -230,24 +233,22 @@ class S14Volume(Scene):
             size=30,
             color=theme.GOLD,
         )
-        if measurable.width > 12.8:
-            measurable.scale_to_fit_width(12.8)
-        measurable.to_edge(DOWN, buff=1.3)
-        self.play(Write(measurable, run_time=1.8))
-
         examples = theme.caption(
             "a chocolate bar, a cube, a ball, some wildly irregular shape — virtually everything",
-            size=24,
+            size=26,
         )
-        examples.next_to(measurable, DOWN, buff=0.3)
+        # both lines belong to the foot band, so the band holds the pair
+        closing = theme.foot(VGroup(measurable, examples).arrange(DOWN, buff=0.22))
+
+        self.play(Write(measurable, run_time=1.8))
         self.play(FadeIn(examples, run_time=0.8))
         self.wait(1.2)
 
-        punch = theme.body("our four batches are not.", size=34, color=theme.REFUSE)
+        punch = theme.body("our four batches are not.", size=32, color=theme.REFUSE)
         punch.move_to(examples)
         self.play(FadeOut(examples, run_time=0.4), FadeIn(punch, scale=1.1, run_time=0.7))
         self.wait(2.2)
-        self.play(FadeOut(VGroup(head, rules, glosses, measurable, punch), run_time=0.9))
+        self.play(FadeOut(VGroup(head, rules, glosses, closing, punch), run_time=0.9))
 
 
 class S14EndlessZoom(Scene):
@@ -288,10 +289,12 @@ class S14EndlessZoom(Scene):
         self.add(field)
 
         rgb = space.rgb_of(theme.C_A)
-        readout = theme.mono("× 1", size=28, color=theme.INK_DIM)
-        readout.to_corner(UP + RIGHT, buff=0.6)
+        # The magnification is typeset, so it is only re-set when the octave
+        # changes — about twenty times across the shot, not once a frame.
+        readout = theme.formula(r"\times 1", size=30, color=theme.INK_DIM)
+        readout.move_to(np.array([theme.FRAME_W / 2 - 1.5, theme.TOP_EDGE - 0.75, 0.0]))
         self.add(readout)
-        shown = {"text": ""}
+        shown = {"octave": -1}
 
         octaves = self.DECADES * np.log2(10.0)
 
@@ -314,23 +317,25 @@ class S14EndlessZoom(Scene):
                 rgba[:, :3] = rgb * weight
                 layer.rgbas = rgba
 
-            zoom = 2.0**t
-            text = f"× {zoom:,.0f}" if zoom < 1e4 else f"× 10^{np.log10(zoom):.1f}"
-            if text != shown["text"]:
-                shown["text"] = text
-                fresh = theme.mono(text, size=28, color=theme.INK_DIM)
+            octave = int(t)
+            if octave != shown["octave"]:
+                shown["octave"] = octave
+                zoom = 2.0**octave
+                tex = (rf"\times {zoom:,.0f}".replace(",", r"\,")
+                       if zoom < 1e4 else rf"\times 10^{{{np.log10(zoom):.1f}}}")
+                fresh = theme.formula(tex, size=30, color=theme.INK_DIM)
                 fresh.move_to(readout, aligned_edge=RIGHT)
                 readout.become(fresh)
 
         head = theme.body("zoom into P₁ — as far as you like", size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.5)
+        theme.head(head)
         self.add(head)
         self.play(UpdateFromAlphaFunc(field, paint, run_time=13.0, rate_func=lambda x: x))
 
         verdict = theme.body(
             "never an edge, never a stable structure", size=32, color=theme.GOLD
         )
-        verdict.to_edge(DOWN, buff=0.6)
+        theme.foot(verdict)
         self.play(Write(verdict, run_time=1.6))
         self.wait(2.0)
         self.play(FadeOut(Group(field, head, verdict, readout), run_time=0.9))
@@ -358,7 +363,7 @@ class S14ScaleNeverSettles(Scene):
         ]
         for name, mob, value in specimens:
             mob.scale_to_fit_height(0.75).next_to(scale.pan, UP, buff=0.12)
-            tag = theme.caption(name, size=24).to_edge(UP, buff=0.7)
+            tag = theme.head(theme.caption(name, size=26))
             self.play(FadeIn(mob, run_time=0.5), FadeIn(tag, run_time=0.5))
             self.play(
                 UpdateFromAlphaFunc(
@@ -379,7 +384,7 @@ class S14ScaleNeverSettles(Scene):
         # and now P₁
         dust = self._dust()
         dust.next_to(scale.pan, UP, buff=0.12)
-        tag = theme.mono("P₁", size=34, color=theme.C_A).to_edge(UP, buff=0.7)
+        tag = theme.head(theme.formula("P_1", size=40, color=theme.C_A))
         self.play(FadeIn(dust, run_time=0.6), FadeIn(tag, run_time=0.5))
 
         lower = theme.caption("inner boxes", size=20, color=theme.INK_DIM)
@@ -402,7 +407,7 @@ class S14ScaleNeverSettles(Scene):
         self.wait(6.0)
 
         note = theme.caption("let it still be swinging when the picture cuts to black", size=22)
-        note.to_edge(DOWN, buff=0.35)
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.8))
         self.wait(4.0)
 

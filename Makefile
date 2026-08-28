@@ -3,7 +3,7 @@
 QUALITY ?= -qh          # -ql preview · -qm · -qh 1080p60 · -qk 4K
 SCENE   ?=
 
-.PHONY: all preview scene film list check clean deps
+.PHONY: all preview scene film pack list check clean deps
 
 all:                      ## render every scene at $(QUALITY)
 	./render.sh $(QUALITY)
@@ -16,6 +16,9 @@ scene:                    ## render one scene: make scene SCENE=S12Circle
 
 film:                     ## join the rendered scenes into one cut
 	./assemble.sh
+
+pack:                     ## one folder per sequence: its scenes and its script
+	./pack.sh
 
 list:                     ## list every renderable scene
 	@grep -Hn '^class \w*(Scene)' banach_tarski/scenes/*.py \

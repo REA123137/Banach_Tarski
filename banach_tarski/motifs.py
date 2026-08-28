@@ -157,7 +157,7 @@ class Machine(VGroup):
                 stroke_color=theme.GHOST,
                 stroke_width=1.4,
             ).move_to(pos)
-            stamp = theme.mono(num, size=24, color=theme.INK_DIM).move_to(pos)
+            stamp = theme.formula(num, size=28, color=theme.INK_DIM).move_to(pos)
             stamp.set_opacity(0.75)
             panel = VGroup(cover, stamp)
             self.cogs.add(cog)
@@ -222,7 +222,7 @@ def book(
     grp = VGroup(spine)
     grp.word = word
     if label:
-        title = theme.serif(theme.word_glyph(word), size=17, color=col)
+        title = theme.formula(theme.word_glyph(word), size=20, color=col)
         title.rotate(PI / 2)
         if title.height > height * 0.82:
             title.scale(height * 0.82 / title.height)
@@ -280,7 +280,7 @@ def shelf_unit(
     unit = VGroup(frame, books)
     unit.books = books
     if label:
-        tag = theme.mono(label, size=26, color=color or theme.INK_DIM)
+        tag = theme.formula(label, size=28, color=color or theme.INK_DIM)
         tag.next_to(unit, DOWN, buff=0.22)
         unit.add(tag)
         unit.tag = tag
@@ -601,7 +601,7 @@ def open_book(word: str, matrix, width: float = 2.2, height: float = 1.6) -> VGr
     right.shift(RIGHT * width / 4)
     spine = Line(left.get_top() + RIGHT * width / 4, left.get_bottom() + RIGHT * width / 4,
                  color=col, stroke_width=1.4).set_opacity(0.6)
-    title = theme.serif(theme.word_glyph(word), size=22, color=col)
+    title = theme.formula(theme.word_glyph(word), size=26, color=col)
     title.move_to(left)
     page = orientation_icon(matrix, radius=height * 0.30)
     page.move_to(right)
@@ -646,10 +646,16 @@ def container(width: float = 1.5, height: float = 1.0, color: str = theme.GHOST)
 
 
 class Dial(VGroup):
-    """One input or output of a matrix, drawn as an instrument."""
+    """One input or output of a matrix, drawn as an instrument.
+
+    The needle and the numeral are moved separately on purpose: the numeral is
+    LaTeX, so rebuilding it once a frame while the dial spins would mean a
+    typesetting run per frame.  :meth:`set_needle` is what an updater calls;
+    :meth:`set_value` is called a handful of times, when a reading settles.
+    """
 
     def __init__(self, value: float = 0.0, radius: float = 0.42, color: str = theme.INK_DIM,
-                 label: str | None = None):
+                 label: str | None = None, show_value: bool = True):
         super().__init__()
         self.radius = radius
         self.face = Circle(radius=radius, color=color, stroke_width=1.8)
@@ -666,22 +672,37 @@ class Dial(VGroup):
         )
         self.needle = Line(ORIGIN, np.array([0.0, radius * 0.78, 0.0]),
                            color=theme.GOLD, stroke_width=2.6)
-        self.readout = theme.mono(f"{value:+.2f}", size=18, color=theme.INK)
-        self.readout.next_to(self.face, DOWN, buff=0.10)
-        self.add(self.face, ticks, self.needle, self.readout)
+        self.add(self.face, ticks, self.needle)
+        self.readout = None
+        if show_value:
+            self.readout = theme.formula(self._numeral(value), size=22, color=theme.INK)
+            self.readout.next_to(self.face, DOWN, buff=0.12)
+            self.add(self.readout)
         if label:
-            tag = theme.mono(label, size=18, color=color)
+            tag = theme.formula(label, size=22, color=color)
             tag.next_to(self.face, UP, buff=0.10)
             self.add(tag)
-        self.set_value(value)
+        self.set_needle(value)
 
-    def set_value(self, value: float):
+    @staticmethod
+    def _numeral(value: float) -> str:
+        return f"{value:+.2f}".replace("-", "-")
+
+    def set_needle(self, value: float):
+        """Move the needle only — safe to call every frame."""
+        pivot = self.face.get_center()
         angle = PI / 2 - float(np.clip(value, -1.0, 1.0)) * PI * 0.75
         self.needle.put_start_and_end_on(
-            ORIGIN + self.face.get_center(),
-            self.face.get_center() + self.radius * 0.78 * np.array([np.cos(angle), np.sin(angle), 0]),
+            pivot,
+            pivot + self.radius * 0.78 * np.array([np.cos(angle), np.sin(angle), 0.0]),
         )
-        new = theme.mono(f"{value:+.2f}", size=18, color=theme.INK)
-        new.move_to(self.readout)
-        self.readout.become(new)
+        return self
+
+    def set_value(self, value: float):
+        """Move the needle and typeset the reading.  Call this sparingly."""
+        self.set_needle(value)
+        if self.readout is not None:
+            fresh = theme.formula(self._numeral(value), size=22, color=theme.INK)
+            fresh.move_to(self.readout)
+            self.readout.become(fresh)
         return self

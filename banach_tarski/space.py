@@ -291,11 +291,38 @@ class Stage:
         for s in self.solids:
             s.sync(self.view)
 
-    def install(self, scene):
+    def install(self, scene, fit: bool = True, margin: float = 0.14):
+        if fit:
+            self.fit(margin)
         scene.add(self.mobject)
         if not self._updater_installed:
             self.mobject.add_updater(self.sync)
             self._updater_installed = True
+        return self
+
+    def fit(self, margin: float = 0.14, spread: float = 1.0):
+        """Shrink and centre the view until the geometry sits inside the band.
+
+        Text lives in the head and foot bands and geometry in the middle one;
+        this is what keeps the second from growing into the first.  ``spread``
+        declares how much further the contents will travel later in the scene —
+        a scene whose pieces fly apart to twice their radius passes ``2.0``.
+        """
+        self.sync()
+        # a Group holds no points of its own, so ask the family
+        if not any(m.has_points() for m in self.mobject.get_family()):
+            return self
+        top, bottom = self.mobject.get_top()[1], self.mobject.get_bottom()[1]
+        centre = (top + bottom) / 2.0
+        height = (top - bottom) * spread
+        limit = theme.STAGE_HEIGHT - 2 * margin
+        if height > limit and height > 1e-6:
+            self.view.scale *= limit / height
+            self.sync()
+            top, bottom = self.mobject.get_top()[1], self.mobject.get_bottom()[1]
+            centre = (top + bottom) / 2.0
+        self.view.origin = self.view.origin + np.array([0.0, -centre, 0.0])
+        self.sync()
         return self
 
     def freeze(self):

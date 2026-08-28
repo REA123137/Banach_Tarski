@@ -84,7 +84,9 @@ class S08Angle(Scene):
         self.wait(1.2)
 
         self.play(
-            angle.animate(run_time=1.0, rate_func=theme.EASE).scale(0.6).to_edge(UP, buff=0.9),
+            angle.animate(run_time=1.0, rate_func=theme.EASE).scale(0.6).move_to(
+                np.array([0.0, theme.TOP_EDGE - theme.MARGIN - 0.45, 0.0])
+            ),
             FadeOut(value, run_time=0.6),
         )
 
@@ -92,24 +94,23 @@ class S08Angle(Scene):
             theme.body("The two rotations by arccos(1/3) about two", size=36),
             theme.body("perpendicular axes generate a free group.", size=36),
         ).arrange(DOWN, buff=0.30)
-        claim.move_to(UP * 0.4)
-        anim.write_lines(self, claim, per_line=1.3, lag=0.8)
-
         plain = theme.body(
             "every word is a real motion, and two different words are two different motions",
             size=28,
             color=theme.INK_DIM,
         )
-        plain.next_to(claim, DOWN, buff=0.8)
+        block = theme.stage(VGroup(claim, plain).arrange(DOWN, buff=0.7))
+
+        anim.write_lines(self, claim, per_line=1.3, lag=0.8)
         self.play(FadeIn(plain, run_time=0.9))
 
         honest = theme.caption(
             "the proof is an induction on the length of the words; we give the result", size=24
         )
-        honest.to_edge(DOWN, buff=0.5)
+        theme.foot(honest)
         self.play(FadeIn(honest, run_time=0.7))
         self.wait(2.4)
-        self.play(FadeOut(VGroup(angle, claim, plain, honest), run_time=0.8))
+        self.play(FadeOut(VGroup(angle, block, honest), run_time=0.8))
 
 
 class S08Gate(Scene):
@@ -126,7 +127,7 @@ class S08Gate(Scene):
         # the gate
         post_l = Line(UP * 1.35, DOWN * 1.35, color=theme.INK_DIM, stroke_width=4)
         post_r = post_l.copy()
-        posts = VGroup(post_l, post_r).arrange(RIGHT, buff=2.6)
+        posts = VGroup(post_l, post_r).arrange(RIGHT, buff=3.4)
         lintel = Line(
             post_l.get_top() + LEFT * 0.2, post_r.get_top() + RIGHT * 0.2,
             color=theme.INK_DIM, stroke_width=4,
@@ -134,11 +135,11 @@ class S08Gate(Scene):
         sign = theme.body("divisible by 3 ?", size=30, color=theme.INK)
         sign.next_to(lintel, UP, buff=0.28)
         gate = VGroup(posts, lintel, sign)
-        gate.move_to(UP * 0.35)
+        theme.stage(gate)
         self.play(Create(posts, run_time=0.7), Create(lintel, run_time=0.5),
                   FadeIn(sign, run_time=0.5))
 
-        verdict_pos = gate.get_center() + DOWN * 2.35
+        verdict_pos = gate.get_bottom() + DOWN * 0.55
 
         # a stream of words, each with its number, faster and faster
         stream = gate_words(4)
@@ -148,9 +149,9 @@ class S08Gate(Scene):
         for i, run_time in enumerate(speeds):
             word = stream[i % len(stream)]
             n = numerator(word)
-            tile = theme.word_mobject(word, size=30)
+            tile = theme.word_mobject(word, size=26)
             tile.move_to(LEFT * 6.4 + UP * 0.35)
-            number = theme.mono(str(n), size=34, color=theme.INK)
+            number = theme.formula(str(n), size=34, color=theme.INK)
             number.next_to(tile, DOWN, buff=0.25)
             pack = VGroup(tile, number)
             self.add(pack)
@@ -169,7 +170,7 @@ class S08Gate(Scene):
             self.remove(pack, answer)
 
         tally = theme.caption("dozens, then hundreds — without exception", size=24)
-        tally.to_edge(DOWN, buff=0.55)
+        theme.foot(tally)
         self.play(FadeIn(tally, run_time=0.6))
         self.wait(0.8)
 
@@ -177,8 +178,8 @@ class S08Gate(Scene):
         self.play(FadeOut(tally, run_time=0.4))
         special = theme.body("the number that would bring the sphere home", size=28,
                              color=theme.GOLD)
-        special.to_edge(UP, buff=0.5)
-        zero = theme.mono("0", size=52, color=theme.GOLD)
+        theme.head(special)
+        zero = theme.formula("0", size=56, color=theme.GOLD)
         zero.move_to(LEFT * 6.4 + UP * 0.35)
         self.play(FadeIn(special, run_time=0.7), FadeIn(zero, run_time=0.5))
         self.play(zero.animate(run_time=1.6, rate_func=theme.EASE).move_to(gate.get_center()))
@@ -193,7 +194,7 @@ class S08Gate(Scene):
         self.wait(0.8)
 
         moral = theme.body("no sequence of rotations ever brings the sphere back", size=30)
-        moral.to_edge(DOWN, buff=0.55)
+        theme.foot(moral)
         self.play(Write(moral, run_time=1.6))
         self.wait(2.0)
         self.play(FadeOut(VGroup(gate, zero, bar, refused, special, moral), run_time=0.8))

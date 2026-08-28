@@ -181,7 +181,7 @@ def countdown_silence(scene, seconds: float, label: str | None = None):
     """The script's ``silence 3 s``: real silence, but the frame keeps breathing."""
     if label:
         tag = theme.caption(label, size=22)
-        tag.to_edge(DOWN, buff=0.5)
+        theme.foot(tag)
         scene.play(FadeIn(tag, run_time=0.4))
         scene.wait(max(seconds - 0.8, 0.1))
         scene.play(FadeOut(tag, run_time=0.4))
@@ -192,7 +192,7 @@ def countdown_silence(scene, seconds: float, label: str | None = None):
 def bridge(scene, text: str, run_time: float = 1.6, hold: float = 0.7):
     """The thirteen bridges.  Never cut, always the same treatment."""
     line = theme.body(text, size=30, color=theme.INK_DIM)
-    line.to_edge(DOWN, buff=0.75)
+    theme.foot(line)
     scene.play(FadeIn(line, shift=UP * 0.15, run_time=run_time * 0.4))
     scene.wait(hold)
     scene.play(FadeOut(line, run_time=run_time * 0.35))

@@ -56,36 +56,34 @@ class S02Statement(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
+        # Each line isolates the one word that carries weight, so it can be
+        # lit where it stands rather than by counting characters.
+        keyed = ("finitely", "moving", "identical")
         lines = VGroup(
-            *[theme.body(line, size=36) for line in STATEMENT]
-        ).arrange(DOWN, buff=0.52, aligned_edge=LEFT)
-        lines.move_to(np.zeros(3))
+            *[
+                theme.highlighted(line, word, size=36, accent=theme.INK)
+                for line, word in zip(STATEMENT, keyed)
+            ]
+        ).arrange(DOWN, buff=0.5, aligned_edge=LEFT)
+        theme.stage(lines)
 
-        attribution = theme.caption("Banach & Tarski, 1924", size=24)
-        attribution.next_to(lines, UP, buff=0.9)
+        attribution = theme.head(theme.caption("Banach & Tarski, 1924", size=26))
 
         self.play(FadeIn(attribution, run_time=0.8))
         anim.write_lines(self, lines, per_line=1.6, lag=0.85)
         self.wait(1.2)
 
-        # the three words that do all the work light up where they stand
-        highlights = VGroup()
-        for word in ("finitely", "moving", "identical"):
-            for line in lines:
-                idx = line.original_text.lower().find(word)
-                if idx < 0:
-                    continue
-                piece = VGroup(*line[idx : idx + len(word)])
-                highlights.add(piece)
-                break
         self.play(
-            *[p.animate(run_time=1.0).set_color(theme.GOLD) for p in highlights],
-            lines.animate(run_time=1.0).set_opacity(0.85),
+            *[
+                line.animate(run_time=1.0).set_color_by_tex(
+                    theme.latex_escape(word), theme.GOLD
+                )
+                for line, word in zip(lines, keyed)
+            ],
         )
         self.wait(1.0)
 
-        note = theme.caption("three words do all the work", size=26)
-        note.next_to(lines, DOWN, buff=0.9)
+        note = theme.foot(theme.caption("three words do all the work", size=26))
         self.play(FadeIn(note, shift=UP * 0.15, run_time=0.7))
         self.wait(1.6)
         self.play(FadeOut(VGroup(lines, attribution, note), run_time=0.8))
@@ -104,7 +102,7 @@ class S02WordsDefend(Scene):
 
         for index, (word, gloss) in enumerate(KEY_WORDS):
             title = theme.display(word, size=64, color=theme.GOLD)
-            title.to_edge(UP, buff=1.1)
+            theme.head(title)
             sub = theme.body(gloss, size=30, color=theme.INK_DIM)
             sub.next_to(title, DOWN, buff=0.38)
             self.play(Write(title, run_time=0.9), FadeIn(sub, run_time=0.9))

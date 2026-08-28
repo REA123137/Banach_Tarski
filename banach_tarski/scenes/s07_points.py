@@ -43,32 +43,15 @@ from banach_tarski import anim, freegroup, motifs, space, theme
 from banach_tarski.rotations import COS_THETA, SIN_THETA, MATRICES
 
 
-def matrix_block(rows: list[list[str]], color: str = theme.INK, size: float = 26) -> VGroup:
-    """A matrix, set by hand.  No LaTeX anywhere in this project."""
-    grid = VGroup()
-    for row in rows:
-        line = VGroup(*[theme.mono(entry, size=size, color=color) for entry in row])
-        for cell in line:
-            cell.width  # force layout
-        line.arrange(RIGHT, buff=0.42)
-        grid.add(line)
-    grid.arrange(DOWN, buff=0.26)
-    # align the columns
-    for col in range(len(rows[0])):
-        xs = [row[col].get_center()[0] for row in grid]
-        target = float(np.mean(xs))
-        for row in grid:
-            row[col].shift(RIGHT * (target - row[col].get_center()[0]))
-    height = grid.height + 0.24
-    left = VGroup(
-        Line(UP * height / 2, DOWN * height / 2, color=color, stroke_width=2),
-        Line(ORIGIN := np.zeros(3), RIGHT * 0.16, color=color, stroke_width=2).shift(UP * height / 2),
-        Line(np.zeros(3), RIGHT * 0.16, color=color, stroke_width=2).shift(DOWN * height / 2),
-    )
-    left.next_to(grid, LEFT, buff=0.22)
-    right = left.copy().flip(UP)
-    right.next_to(grid, RIGHT, buff=0.22)
-    return VGroup(left, grid, right)
+def matrix_block(rows: list[list[str]], color: str = theme.INK, size: float = 34):
+    """A matrix, set by LaTeX.
+
+    An earlier version placed each entry by hand and aligned the columns by
+    their centres; entries of different widths then ran into each other.
+    ``pmatrix`` does the job properly, and the code is three lines.
+    """
+    body = r" \\ ".join(" & ".join(entry for entry in row) for row in rows)
+    return theme.formula(r"\begin{pmatrix}" + body + r"\end{pmatrix}", size=size, color=color)
 
 
 class S07WordsVsPoints(Scene):
@@ -114,7 +97,7 @@ class S07WordsVsPoints(Scene):
             size=30,
             color=theme.GOLD,
         )
-        verdict.to_edge(DOWN, buff=0.45)
+        theme.foot(verdict)
         self.play(Write(verdict, run_time=1.8))
         self.wait(2.0)
         self.play(
@@ -131,36 +114,41 @@ class S07Matrices(Scene):
 
         head = theme.body("A rotation about the vertical axis, through an angle θ:",
                           size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.8)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
 
         a = matrix_block(
-            [["cos θ", "− sin θ", "0"], ["sin θ", "cos θ", "0"], ["0", "0", "1"]],
+            [[r"\cos\theta", r"-\sin\theta", "0"],
+             [r"\sin\theta", r"\cos\theta", "0"],
+             ["0", "0", "1"]],
             color=theme.C_A,
         )
         b = matrix_block(
-            [["1", "0", "0"], ["0", "cos θ", "− sin θ"], ["0", "sin θ", "cos θ"]],
+            [["1", "0", "0"],
+             ["0", r"\cos\theta", r"-\sin\theta"],
+             ["0", r"\sin\theta", r"\cos\theta"]],
             color=theme.C_B,
         )
-        label_a = theme.mono("A", size=40, color=theme.C_A)
-        label_b = theme.mono("B", size=40, color=theme.C_B)
+        label_a = theme.formula("A", size=44, color=theme.C_A)
+        label_b = theme.formula("B", size=44, color=theme.C_B)
         block_a = VGroup(label_a, a).arrange(RIGHT, buff=0.35)
         block_b = VGroup(label_b, b).arrange(RIGHT, buff=0.35)
-        pair = VGroup(block_a, block_b).arrange(RIGHT, buff=1.5).shift(UP * 0.3)
-        self.play(FadeIn(block_a, run_time=1.0))
-        self.play(FadeIn(block_b, run_time=1.0))
-        self.wait(0.8)
-
+        pair = VGroup(block_a, block_b).arrange(RIGHT, buff=1.5)
         gloss = VGroup(
             theme.body("A turns about the vertical axis, B about a horizontal one.", size=30),
             theme.body("From now on, our letters are these matrices:", size=30,
                        color=theme.INK_DIM),
-            theme.formula("a b   becomes   A B", size=36, color=theme.GOLD),
+            theme.formula(r"a\,b \;\longmapsto\; A\,B", size=36, color=theme.GOLD),
         ).arrange(DOWN, buff=0.34)
-        gloss.next_to(pair, DOWN, buff=0.9)
+        # matrices and gloss are placed together, before either is played
+        block = theme.stage(VGroup(pair, gloss).arrange(DOWN, buff=0.75))
+
+        self.play(FadeIn(block_a, run_time=1.0))
+        self.play(FadeIn(block_b, run_time=1.0))
+        self.wait(0.8)
         anim.write_lines(self, gloss, per_line=1.1, lag=0.75)
         self.wait(2.0)
-        self.play(FadeOut(VGroup(head, pair, gloss), run_time=0.8))
+        self.play(FadeOut(VGroup(head, block), run_time=0.8))
 
 
 class S07Magnifier(Scene):
@@ -224,14 +212,16 @@ class S07DialMachine(Scene):
             *[motifs.Dial(v, label=n) for v, n in zip(vector, ("x", "y", "z"))]
         ).arrange(DOWN, buff=0.55)
         outs = VGroup(
-            *[motifs.Dial(0.0, label=n) for n in ("x′", "y′", "z′")]
+            *[motifs.Dial(0.0, label=n) for n in ("x'", "y'", "z'")]
         ).arrange(DOWN, buff=0.55)
 
         box = theme.panel(3.6, 4.4)
         inner = matrix_block(
-            [["1/3", "−2√2/3", "0"], ["2√2/3", "1/3", "0"], ["0", "0", "1"]],
+            [[r"\tfrac{1}{3}", r"-\tfrac{2\sqrt{2}}{3}", "0"],
+             [r"\tfrac{2\sqrt{2}}{3}", r"\tfrac{1}{3}", "0"],
+             ["0", "0", "1"]],
             color=theme.C_A,
-            size=22,
+            size=26,
         )
         inner.scale_to_fit_width(3.0).move_to(box)
         machine = VGroup(box, inner)
@@ -248,29 +238,33 @@ class S07DialMachine(Scene):
         self.play(FadeIn(machine, run_time=0.9))
         self.play(FadeIn(ins, run_time=0.7), FadeIn(outs, run_time=0.7), Create(wires, run_time=0.8))
 
-        caption = theme.caption("feed in (0, 1, 0) — the dials spin — the output shows", size=24)
-        caption.to_edge(DOWN, buff=0.5)
+        caption = theme.caption("feed in (0, 1, 0) — the dials spin — the output shows", size=26)
+        theme.foot(caption)
         self.play(FadeIn(caption, run_time=0.6))
 
         def spin(_m, alpha):
             for i, dial in enumerate(outs):
                 if alpha < 0.75:
-                    dial.set_value(float(np.sin(alpha * 26 + i * 1.7)))
+                    dial.set_needle(float(np.sin(alpha * 26 + i * 1.7)))
                 else:
                     settle = (alpha - 0.75) / 0.25
-                    dial.set_value(
+                    dial.set_needle(
                         float(np.sin(0.75 * 26 + i * 1.7)) * (1 - settle) + result[i] * settle
                     )
 
         self.play(UpdateFromAlphaFunc(outs, spin, run_time=2.6, rate_func=theme.EASE))
+        for dial, value in zip(outs, result):
+            dial.set_value(float(value))
         self.wait(0.5)
 
         answer = theme.formula(
-            f"A · (0, 1, 0)  =  ({result[0]:+.2f},  {result[1]:+.2f},  {result[2]:+.2f})",
+            r"A \cdot (0,1,0) \;=\; ("
+            + f"{result[0]:+.2f},\;{result[1]:+.2f},\;{result[2]:+.2f}" + ")",
             size=32,
             color=theme.GOLD,
         )
-        answer.next_to(caption, UP, buff=0.35)
+        # the machine owns the stage band, so the reading goes to the head band
+        theme.head(answer)
         self.play(Write(answer, run_time=1.4))
         self.wait(2.0)
         self.play(FadeOut(VGroup(machine, ins, outs, wires, caption, answer), run_time=0.8))

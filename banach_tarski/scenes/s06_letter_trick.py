@@ -48,12 +48,12 @@ COLUMN_X = {"a": -5.05, "A": -1.72, "b": 1.72, "B": 5.05}
 TOP_Y = 1.75
 ROW_H = 0.60
 ROWS = 6
-WORD_SIZE = 24
+WORD_SIZE = 21
 
 # Every column is two files wide: the words that were always there on the left,
 # and, on the right, the words that arrive when a generator is pushed in front
 # of another column.  A newcomer must land *inside* its pile, not underneath it.
-FILE_OFFSET = 0.80
+FILE_OFFSET = 0.98
 
 
 def column_words(letter: str, count: int = ROWS) -> list[str]:
@@ -75,7 +75,7 @@ class Columns(VGroup):
         self.items: dict[str, list[VGroup]] = {}
         for letter in COLUMN_ORDER:
             colour = theme.LETTER_COLORS[letter]
-            header = theme.body(f"S({theme.letter_glyph(letter)})", size=30, color=colour)
+            header = theme.formula(f"S({theme.letter_glyph(letter)})", size=32, color=colour)
             header.move_to(np.array([COLUMN_X[letter], TOP_Y + 0.72, 0.0]))
             rule = theme.rule(width=2.7, color=colour, stroke=1.2).set_opacity(0.4)
             rule.next_to(header, DOWN, buff=0.16)
@@ -90,7 +90,7 @@ class Columns(VGroup):
                 self.add(tile)
         # the empty word gets a box of its own: it is not in any column
         box = theme.panel(0.9, 0.72, fill="#0B0B0B", stroke=theme.GHOST)
-        glyph = theme.mono("e", size=30, color=theme.C_E).move_to(box)
+        glyph = theme.formula("e", size=34, color=theme.C_E).move_to(box)
         self.empty = VGroup(box, glyph)
         self.empty.move_to(np.array([0.0, TOP_Y - (ROWS - 1) * ROW_H - 0.85, 0.0]))
         self.add(self.empty)
@@ -104,7 +104,7 @@ class S06Columns(Scene):
 
         head = theme.body("I sort the catalogue by the first letter of each word.",
                           size=32, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.55)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
 
         cols = Columns()
@@ -120,14 +120,16 @@ class S06Columns(Scene):
         self.play(FadeIn(cols.empty, run_time=0.6))
         self.wait(0.6)
 
-        formula = theme.formula("F₂  =  {e} ⊔ S(a) ⊔ S(a⁻¹) ⊔ S(b) ⊔ S(b⁻¹)", size=38)
-        formula.to_edge(DOWN, buff=0.28)
+        formula = theme.formula(
+            r"F_2 \;=\; \{e\} \sqcup S(a) \sqcup S(a^{-1}) \sqcup S(b) \sqcup S(b^{-1})",
+            size=38,
+        )
+        note = theme.caption("five piles, covering everything, with no overlap", size=26)
+        block = theme.foot(VGroup(note, formula).arrange(DOWN, buff=0.20))
         self.play(Write(formula, run_time=1.8))
-        note = theme.caption("five piles, covering everything, with no overlap", size=24)
-        note.next_to(formula, UP, buff=0.25)
         self.play(FadeIn(note, run_time=0.6))
         self.wait(2.0)
-        self.play(FadeOut(VGroup(head, cols, formula, note), run_time=0.8))
+        self.play(FadeOut(VGroup(head, cols, block), run_time=0.8))
 
 
 class S06Examples(Scene):
@@ -140,7 +142,7 @@ class S06Examples(Scene):
 
         head = theme.body("I take the words beginning with a⁻¹, and stick an a in front.",
                           size=32, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.7)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.9))
 
         for index, word in enumerate(self.EXAMPLES):
@@ -152,14 +154,14 @@ class S06Examples(Scene):
             size=30,
             color=theme.GOLD,
         )
-        law.to_edge(DOWN, buff=0.7)
+        theme.foot(law)
         self.play(Write(law, run_time=2.0))
         self.wait(2.0)
         self.play(FadeOut(VGroup(head, law), run_time=0.8))
 
     # ---------------------------------------------------------------- helper
     def _one_example(self, word: str, challenge: bool):
-        prefix = theme.mono("a", size=54, color=theme.C_A)
+        prefix = theme.formula("a", size=58, color=theme.C_A)
         letters = theme.word_mobject(word, size=54, spaced=True)
         row = VGroup(prefix, letters).arrange(RIGHT, buff=0.36).move_to(UP * 0.2)
 
@@ -187,10 +189,11 @@ class S06Examples(Scene):
         result = freegroup.reduce("a" + word)
         home = result[0] if result else ""
         colour = theme.LETTER_COLORS[home]
-        verdict = theme.body(
-            f"now begins with {theme.letter_glyph(home)}" if home else "the empty word",
-            size=30,
-            color=colour,
+        verdict = (
+            theme.prose_math("now begins with {}", theme.letter_glyph(home), size=30,
+                             color=colour)
+            if home
+            else theme.body("the empty word", size=30, color=colour)
         )
         verdict.next_to(rest if len(rest) else row, DOWN, buff=0.8)
         self.play(FadeIn(verdict, shift=UP * 0.12, run_time=0.6))
@@ -218,26 +221,32 @@ class S06Doubling(Scene):
             self._push(cols, generator, source)
             self.wait(0.6)
 
-        final = theme.formula("F₂  =  S(a) ⊔ a S(a⁻¹)          F₂  =  S(b) ⊔ b S(b⁻¹)", size=34)
-        final.to_edge(DOWN, buff=0.30)
-        self.play(Write(final, run_time=2.0))
+        # the verdict and the formula are one block, so the block is what is
+        # fitted into the foot band — a caption placed above a footed line
+        # would climb straight back into the columns
+        final = theme.formula(
+            r"F_2 = S(a) \sqcup a\,S(a^{-1}) \qquad\qquad F_2 = S(b) \sqcup b\,S(b^{-1})",
+            size=34,
+        )
         verdict = theme.body("four piles.  two complete catalogues.  nothing was added.",
-                             size=30, color=theme.GOLD)
-        verdict.next_to(final, UP, buff=0.35)
+                             size=28, color=theme.GOLD)
+        closing = theme.foot(VGroup(verdict, final).arrange(DOWN, buff=0.22))
+        self.play(Write(final, run_time=2.0))
         self.play(FadeIn(verdict, run_time=0.9))
         self.wait(2.4)
-        self.play(FadeOut(VGroup(cols, final, verdict), run_time=0.9))
+        self.play(FadeOut(VGroup(cols, closing), run_time=0.9))
 
     # ---------------------------------------------------------------- helper
     def _push(self, cols: Columns, generator: str, source: str):
         colour = theme.LETTER_COLORS[generator]
-        banner = theme.body(
-            f"put {theme.letter_glyph(generator)} in front of every word of "
+        banner = theme.prose_math(
+            "put {} in front of every word of {}",
+            theme.letter_glyph(generator),
             f"S({theme.letter_glyph(source)})",
             size=30,
             color=colour,
         )
-        banner.to_edge(UP, buff=0.35)
+        theme.head(banner)
         self.play(FadeIn(banner, run_time=0.7))
 
         # highlight the column that is about to move
@@ -274,13 +283,16 @@ class S06Doubling(Scene):
         )
         self.play(cols.headers[source].animate(run_time=0.4).scale(1 / 1.08))
 
-        covered = "{e} ⊔ S(a⁻¹) ⊔ S(b) ⊔ S(b⁻¹)" if generator == "a" else "{e} ⊔ S(a) ⊔ S(a⁻¹) ⊔ S(b⁻¹)"
+        covered = (r"\{e\} \sqcup S(a^{-1}) \sqcup S(b) \sqcup S(b^{-1})"
+                   if generator == "a"
+                   else r"\{e\} \sqcup S(a) \sqcup S(a^{-1}) \sqcup S(b^{-1})")
         line = theme.formula(
-            f"{theme.letter_glyph(generator)} S({theme.letter_glyph(source)})  =  {covered}",
+            theme.letter_glyph(generator)
+            + r"\,S(" + theme.letter_glyph(source) + r") \;=\; " + covered,
             size=34,
             color=colour,
         )
-        line.to_edge(DOWN, buff=1.05)
+        theme.foot(line)
         self.play(Write(line, run_time=1.4))
         self.wait(1.4)
         self.play(FadeOut(VGroup(banner, line), run_time=0.6))
@@ -306,7 +318,7 @@ class S06Librarian(Scene):
                 per_row=3,
                 rows=3,
                 color=theme.LETTER_COLORS[letter],
-                label=f"S({theme.letter_glyph(letter)})",
+                label=f"S({theme.letter_glyph(letter)})",  # set as maths by shelf_unit
             )
             units.add(unit)
         units.arrange(RIGHT, buff=0.55).scale_to_fit_width(12.0)
@@ -354,7 +366,7 @@ class S06Librarian(Scene):
 
         verdict = theme.body("one unit overflows and fills the other three", size=30,
                              color=theme.C_AI)
-        verdict.to_edge(DOWN, buff=0.35)
+        theme.foot(verdict)
         self.play(FadeIn(verdict, run_time=0.8))
         self.wait(2.0)
         self.play(FadeOut(VGroup(units, hand, verdict), run_time=0.9))

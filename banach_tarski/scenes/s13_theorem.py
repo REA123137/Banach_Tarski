@@ -43,13 +43,13 @@ from banach_tarski.rotations import A, B
 from banach_tarski.scenes.s01_trick import PIECE_COLORS, foam_ball
 
 CHAIN = [
-    ("L", "the ball", theme.INK),
-    ("∼", "", theme.INK_DIM),
-    ("L₀", "the ball minus its centre", theme.INK),
-    ("∼", "", theme.INK_DIM),
-    ("L₀ ∖ D", "…minus the poles", theme.INK),
-    ("=", "", theme.INK_DIM),
-    ("(P₁ ∪ P₂)  ⊔  (P₃ ∪ P₄)", "two complete copies", theme.GOLD),
+    (r"L", "the ball", theme.INK),
+    (r"\sim", "", theme.INK_DIM),
+    (r"L_0", "the ball minus its centre", theme.INK),
+    (r"\sim", "", theme.INK_DIM),
+    (r"L_0 \setminus D", "…minus the poles", theme.INK),
+    (r"=", "", theme.INK_DIM),
+    (r"(P_1 \cup P_2) \;\sqcup\; (P_3 \cup P_4)", "two complete copies", theme.GOLD),
 ]
 
 
@@ -90,7 +90,7 @@ class S13Chain(Scene):
                                 size=38, color=theme.GOLD)
         if verdict.width > 12.8:
             verdict.scale_to_fit_width(12.8)
-        verdict.to_edge(DOWN, buff=0.9)
+        theme.foot(verdict)
         self.play(Write(verdict, run_time=2.4))
         self.wait(1.0)
 
@@ -123,7 +123,9 @@ class S13Replay(Scene):
                                 size_far=0.9, fog=0.85, bands=6)
             parts.append(cloud)
             stage.add(cloud)
+        # the pieces separate before they re-form: reserve the room
         stage.install(self)
+        stage.fit(spread=2.25)
         self.wait(0.8)
 
         cam_x, cam_y, _ = stage.view.basis()
@@ -139,19 +141,19 @@ class S13Replay(Scene):
         )
 
         # every piece now carries its name and the rotation applied to it
-        names = ["P₁", "P₂", "P₃", "P₄", "the rest"]
+        names = ["P_1", "P_2", "P_3", "P_4", r"\text{the rest}"]
         rotations = ["", "A", "", "B", ""]
         tags = VGroup()
         for i, (name, rot) in enumerate(zip(names, rotations)):
             centre = parts[i].points.mean(axis=0)
             screen, _ = stage.view.project_one(centre + 1.15 * cam_y)
-            label = theme.body(name, size=30, color=PIECE_COLORS[i])
+            label = theme.formula(name, size=34, color=PIECE_COLORS[i])
             if rot:
                 arrow = Arrow(
                     LEFT * 0.28, RIGHT * 0.28, buff=0, color=PIECE_COLORS[i], stroke_width=3,
                     max_tip_length_to_length_ratio=0.4,
                 )
-                mark = theme.mono(rot, size=28, color=PIECE_COLORS[i])
+                mark = theme.formula(rot, size=32, color=PIECE_COLORS[i])
                 label = VGroup(label, arrow, mark).arrange(RIGHT, buff=0.14)
             label.move_to(screen)
             tags.add(label)
@@ -176,7 +178,7 @@ class S13Replay(Scene):
         self.wait(0.8)
 
         count = theme.body("five pieces, as promised at the start", size=30, color=theme.GOLD)
-        count.to_edge(DOWN, buff=0.6)
+        theme.foot(count)
         self.play(FadeIn(count, run_time=0.9))
         self.wait(1.2)
 

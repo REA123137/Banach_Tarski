@@ -98,7 +98,7 @@ class S12Circle(Scene):
         self.play(Create(gap, run_time=0.5), FadeIn(label, run_time=0.5))
 
         head = theme.body("it looks incomplete.  it is not.", size=30, color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.6)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
         self.wait(1.0)
 
@@ -108,7 +108,7 @@ class S12Circle(Scene):
         )
         if statement.width > 12.6:
             statement.scale_to_fit_width(12.6)
-        statement.to_edge(DOWN, buff=0.5)
+        theme.foot(statement)
         self.play(Write(statement, run_time=2.0))
         self.wait(0.8)
 
@@ -129,22 +129,22 @@ class S12Circle(Scene):
                 lag_ratio=0.55,
             )
         )
-        formula = theme.formula("X  =  { p rotated by 1, 2, 3, … radians }", size=32,
+        formula = theme.formula(r"X \;=\; \{\, p \text{ rotated by } 1, 2, 3, \dots \text{ radians} \,\}", size=32,
                                 color=theme.C_B)
         formula.move_to(statement)
         self.play(FadeOut(statement, run_time=0.4), FadeIn(formula, run_time=0.6))
         self.wait(0.8)
 
-        counter = theme.mono(f"{len(dots)} …", size=26, color=theme.INK_DIM)
+        counter = theme.formula(rf"{len(dots)} \dots", size=30, color=theme.INK_DIM)
         tail = theme.caption("the queue never ends", size=22)
         meter = VGroup(counter, tail).arrange(DOWN, buff=0.14)
-        meter.to_corner(UP + RIGHT, buff=0.55)
+        theme.stage_corner(meter, x_sign=1.0, y_sign=1.0)
         self.play(FadeIn(meter, run_time=0.6))
 
         # -- the key moment: every point steps back one place --------------
         self.play(FadeOut(head, run_time=0.4))
         move = theme.body("rotate the queue by one radian backwards", size=30, color=theme.C_B)
-        move.to_edge(UP, buff=0.6)
+        theme.head(move)
         self.play(FadeIn(move, run_time=0.7))
 
         for take, run_time in ((0, 5.5), (1, 2.4), (2, 1.6)):
@@ -195,7 +195,7 @@ class S12Dartboard(Scene):
 
         head = theme.body("the forbidden axes can be put in a list", size=30,
                           color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.7)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.7))
 
         rng = np.random.default_rng(21)
@@ -230,7 +230,7 @@ class S12Dartboard(Scene):
         )
 
         verdict = theme.body(f"a hundred darts.  {hits} hits.", size=34, color=theme.GOLD)
-        verdict.to_edge(DOWN, buff=0.6)
+        theme.foot(verdict)
         self.play(Write(verdict, run_time=1.2))
         self.wait(2.0)
         self.play(FadeOut(VGroup(board, pricks, darts, head2, verdict), run_time=0.8))
@@ -251,7 +251,7 @@ class S12Poles(Scene):
         stage.view.origin = np.array([0.0, -0.30, 0.0])
         for wire in space.wire_sphere(1.0, 10, 5, color="#141414", width=1.0):
             stage.add(wire)
-        axis_line = space.Wire(space.axis_segment(axis, 1.5), color=theme.GOLD, width=1.8,
+        axis_line = space.Wire(space.axis_segment(axis, 1.12), color=theme.GOLD, width=1.8,
                                closed=False)
         axis_line.mobject.set_stroke(opacity=0.6)
         stage.add(axis_line)
@@ -284,10 +284,11 @@ class S12Poles(Scene):
         )
         stage.add(queue_cloud)
         stage.install(self)
+        stage.fit(spread=1.12)
 
         head = theme.body("a new axis, avoiding every forbidden one", size=30,
                           color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.6)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
         self.wait(1.2)
 
@@ -301,7 +302,7 @@ class S12Poles(Scene):
 
         # one gesture, everywhere at once
         move = theme.body("one motion — all of them close", size=32, color=theme.GOLD)
-        move.to_edge(DOWN, buff=0.6)
+        theme.foot(move)
         self.play(FadeIn(move, run_time=0.7))
         self.play(
             space.rotate_cloud(queue_cloud, rot.T, run_time=4.0),
@@ -317,7 +318,7 @@ class S12Poles(Scene):
         ).arrange(DOWN, buff=0.28)
         if results.width > 12.8:
             results.scale_to_fit_width(12.8)
-        results.to_edge(DOWN, buff=0.45)
+        theme.foot(results)
         self.play(FadeOut(move, run_time=0.4))
         anim.write_lines(self, results, per_line=1.6, lag=0.8)
         self.wait(2.2)
@@ -353,7 +354,7 @@ class S12Centre(Scene):
 
         head = theme.body("draw a circle inside the ball, through the centre", size=30,
                           color=theme.INK_DIM)
-        head.to_edge(UP, buff=0.6)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
         self.wait(1.4)
 
@@ -373,8 +374,8 @@ class S12Centre(Scene):
             space.rotate_cloud(queue, rot.T, run_time=3.5, about=centre_of_ring),
             origin_mark.mobject.animate(run_time=3.5).set_opacity(0.0),
         )
-        verdict = theme.formula("L  ∼  L₀", size=44, color=theme.GOLD)
-        verdict.to_edge(DOWN, buff=0.7)
+        verdict = theme.formula(r"L \;\sim\; L_0", size=44, color=theme.GOLD)
+        theme.foot(verdict)
         self.play(Write(verdict, run_time=1.2))
         self.wait(2.2)
         self.play(FadeOut(VGroup(head, verdict), run_time=0.8))

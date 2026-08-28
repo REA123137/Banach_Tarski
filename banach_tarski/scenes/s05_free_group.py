@@ -50,8 +50,8 @@ class S05Catalogue(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
-        name = theme.formula("F₂", size=72)
-        name.to_edge(UP, buff=0.9)
+        name = theme.formula(r"F_2", size=72)
+        theme.head(name)
         definition = theme.body(
             "{ all reduced words written with  a,  a⁻¹,  b,  b⁻¹ }", size=38
         )
@@ -75,7 +75,8 @@ class S05Catalogue(Scene):
             if row.width > 12.6:
                 row.scale_to_fit_width(12.6)
             rows.add(row)
-        rows.arrange(DOWN, buff=0.38).next_to(plain, DOWN, buff=0.6)
+        theme.stage(VGroup(definition, plain, rows.arrange(DOWN, buff=0.38))
+                    .arrange(DOWN, buff=0.42))
         for row in rows:
             self.play(FadeIn(row, lag_ratio=0.06, run_time=0.9))
         dots = theme.body("…", size=40, color=theme.INK_DIM).next_to(rows, DOWN, buff=0.2)
@@ -84,7 +85,8 @@ class S05Catalogue(Scene):
 
         note = theme.caption(
             "including the ones a thousand letters long", size=24
-        ).to_edge(DOWN, buff=0.4)
+        )
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.6))
         self.wait(1.6)
         self.play(FadeOut(VGroup(name, definition, plain, rows, dots, note), run_time=0.8))
@@ -98,7 +100,7 @@ class S05GroupAndFree(Scene):
 
         head = theme.body("We call it a group, because there are three things we can do:",
                           size=32, color=theme.INK_DIM)
-        head.to_edge(UP, buff=1.0)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
 
         cards = VGroup()
@@ -112,19 +114,19 @@ class S05GroupAndFree(Scene):
             body = theme.mono(sample, size=24, color=theme.INK)
             inner = VGroup(label, body).arrange(DOWN, buff=0.35).move_to(box)
             cards.add(VGroup(box, inner))
-        cards.arrange(RIGHT, buff=0.45).next_to(head, DOWN, buff=0.8)
+        theme.stage(cards.arrange(RIGHT, buff=0.45))
         self.play(FadeIn(cards, lag_ratio=0.2, run_time=1.4))
         self.wait(1.4)
         self.play(FadeOut(cards, run_time=0.6), FadeOut(head, run_time=0.6))
 
         # and now the property everything depends on
-        title = theme.display("free", size=64, color=theme.GOLD).to_edge(UP, buff=1.1)
+        title = theme.head(theme.display("free", size=64, color=theme.GOLD))
         formal = VGroup(
             theme.body("A group is free when two different words always name", size=32),
             theme.body("two different elements, unless their equality already", size=32),
             theme.body("follows from the group axioms alone.", size=32),
         ).arrange(DOWN, buff=0.30)
-        formal.next_to(title, DOWN, buff=0.7)
+        theme.stage(formal)
         plain = VGroup(
             theme.body("No shortcuts.", size=34, color=theme.INK_DIM),
             theme.body("Two different sequences leave you in different states.", size=34,
@@ -155,7 +157,7 @@ class S05RubikNotFree(Scene):
         word = VGroup()
         for i in range(4):
             self.play(motifs.turn_face(cube, cube.front, -PI / 2, run_time=0.7))
-            tile = theme.mono("a", size=52, color=theme.C_A)
+            tile = theme.formula("a", size=56, color=theme.C_A)
             word.add(tile)
             word.arrange(RIGHT, buff=0.35).move_to(DOWN * 1.3)
             self.play(FadeIn(tile, shift=UP * 0.15, run_time=0.28))
@@ -165,7 +167,7 @@ class S05RubikNotFree(Scene):
         self.play(FadeIn(same, run_time=0.8))
         self.wait(0.8)
 
-        empty = theme.mono("e", size=52, color=theme.C_E).move_to(word)
+        empty = theme.formula("e", size=56, color=theme.C_E).move_to(word)
         self.play(
             *[t.animate(run_time=0.7).move_to(word.get_center()).set_opacity(0.0) for t in word],
             FadeIn(empty, run_time=0.7),
@@ -193,7 +195,7 @@ class S05LibraryFlight(Scene):
         library.add_updater(library.fly(rate=0.30))
 
         title = theme.serif("a Library of Babel made of motions", size=34)
-        title.to_edge(DOWN, buff=0.6)
+        theme.foot(title)
         self.play(FadeIn(title, run_time=1.2))
         self.wait(4.0)
         self.play(FadeOut(title, run_time=0.8))
@@ -231,7 +233,7 @@ class S05SamePage(Scene):
 
         # -- the library that is not free ---------------------------------
         head = theme.body("a library that is not free", size=32, color=theme.REFUSE)
-        head.to_edge(UP, buff=0.9)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.7))
 
         # on a cube, turning one face four times changes nothing
@@ -247,7 +249,7 @@ class S05SamePage(Scene):
         self.play(FadeOut(VGroup(pair, verdict, head), run_time=0.7))
 
         # -- ours ---------------------------------------------------------
-        head2 = theme.body("ours", size=32, color=theme.C_B).to_edge(UP, buff=0.9)
+        head2 = theme.head(theme.body("ours", size=32, color=theme.C_B))
         self.play(FadeIn(head2, run_time=0.6))
 
         draws = ["a", "b", "ab", "ba", "aab", "abA", "bba", "aB", "bAb", "aaB"]
@@ -262,13 +264,11 @@ class S05SamePage(Scene):
             bk = motifs.open_book(w, m, width=2.3, height=1.6)
             shown.add(bk)
             shown.arrange_in_grid(rows=2, cols=5, buff=0.28)
-            shown.next_to(head2, DOWN, buff=0.6)
-            if shown.width > 13.0:
-                shown.scale_to_fit_width(13.0)
+            theme.stage(shown)
             self.play(FadeIn(bk, run_time=0.42, rate_func=theme.EASE_OUT))
 
         verdict2 = theme.display("never the same page twice", size=42, color=theme.C_B)
-        verdict2.to_edge(DOWN, buff=0.6)
+        theme.foot(verdict2)
         self.play(Write(verdict2, run_time=1.2))
         self.wait(2.2)
         self.play(FadeOut(VGroup(shown, verdict2, head2), run_time=0.8))

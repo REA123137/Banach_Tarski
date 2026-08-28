@@ -96,7 +96,9 @@ class S01Trick(Scene):
         for w in ghost:
             w.mobject.set_stroke(opacity=0.0)
         stage.add(cloud, *ghost)
-        stage.install(self)
+        # the five pieces fly apart later; leave room for them now
+        stage.install(self, margin=0.18)
+        stage.fit(spread=2.25)
         # No permanent drift here: the two balls must not swap sides while
         # they re-form.  The camera moves only where it is asked to.
 
@@ -123,9 +125,9 @@ class S01Trick(Scene):
 
         tags = VGroup()
         for i, name in enumerate(PIECE_NAMES):
-            t = theme.mono(name, size=30, color=PIECE_COLORS[i])
+            t = theme.formula(name, size=34, color=PIECE_COLORS[i])
             tags.add(t)
-        tags.arrange(RIGHT, buff=0.62).to_edge(DOWN, buff=0.6)
+        theme.foot(tags.arrange(RIGHT, buff=0.62))
         self.play(FadeIn(tags, shift=UP * 0.2, run_time=0.8))
 
         # -- 5. the pieces come apart ------------------------------------
@@ -256,7 +258,7 @@ class S01GhostReplay(Scene):
         self.wait(1.0)
 
         tag = theme.caption("the ball that was here", size=24)
-        tag.to_edge(DOWN, buff=0.8)
+        theme.foot(tag)
         self.play(FadeIn(tag, run_time=0.6))
 
         left = space.ball_points(len(cloud.points), seed=21, shell=0.35) - np.array([1.5, 0, 0])
@@ -303,7 +305,7 @@ class S01HandOff(Scene):
         self.wait(0.5)
 
         note = theme.caption("hold — this gesture returns at 24:30, with a square of chocolate", size=22)
-        note.to_edge(DOWN, buff=0.35)
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.6))
 
         # offered through the lens: scale up and past the camera

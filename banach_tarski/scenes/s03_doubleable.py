@@ -95,11 +95,12 @@ class S03Disjoint(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
-        formula = theme.formula("A ∩ B = ∅", size=58)
-        formula.to_edge(UP, buff=0.9)
+        formula = theme.formula(r"A \cap B = \emptyset", size=58)
+        theme.head(formula)
         gloss = theme.body(
             "no element is in both", size=30, color=theme.INK_DIM
-        ).next_to(formula, DOWN, buff=0.3)
+        )
+        theme.stage(VGroup(formula, gloss).arrange(DOWN, buff=0.35))
         self.play(Write(formula, run_time=1.1), FadeIn(gloss, run_time=0.9))
 
         a = blob(1, color=theme.C_B).shift(LEFT * 0.85 + DOWN * 0.6)
@@ -114,7 +115,7 @@ class S03Disjoint(Scene):
         marks = hatching(overlap)
         self.play(Create(overlap, run_time=0.6), FadeIn(marks, run_time=0.6))
         verdict = theme.body("rejected", size=30, color=theme.REFUSE)
-        verdict.to_edge(DOWN, buff=0.8)
+        theme.foot(verdict)
         self.play(FadeIn(verdict, shift=UP * 0.12, run_time=0.5))
         self.wait(1.0)
 
@@ -172,27 +173,26 @@ class S03Doubleable(Scene):
         head = theme.body("Proving the theorem means proving one thing only:", size=32,
                           color=theme.INK_DIM)
         claim = theme.display("the unit ball is doubleable", size=52, color=theme.GOLD)
-        block = VGroup(head, claim).arrange(DOWN, buff=0.45).to_edge(UP, buff=1.0)
+        block = theme.head(VGroup(head, claim).arrange(DOWN, buff=0.45))
         self.play(FadeIn(head, run_time=0.8), Write(claim, run_time=1.4))
         self.wait(0.8)
 
-        line = theme.formula("L  =  U  ⊔  V         U ∼ L         V ∼ L", size=46)
-        line.move_to(DOWN * 0.2)
-        self.play(Write(line, run_time=1.6))
-
+        line = theme.formula(r"L \;=\; U \sqcup V \qquad U \sim L \qquad V \sim L", size=46)
         gloss = VGroup(
             theme.body("a union of disjoint sets…", size=28, color=theme.INK_DIM),
             theme.body("…each equidecomposable with the whole ball", size=28, color=theme.INK_DIM),
         ).arrange(DOWN, buff=0.28)
-        gloss.next_to(line, DOWN, buff=0.7)
+        body_block = theme.stage(VGroup(line, gloss).arrange(DOWN, buff=0.65))
+
+        self.play(Write(line, run_time=1.6))
         anim.write_lines(self, gloss, per_line=1.0, lag=0.7)
         self.wait(0.8)
 
         promise = theme.caption("both words are explained before minute nine", size=24)
-        promise.to_edge(DOWN, buff=0.6)
+        theme.foot(promise)
         self.play(FadeIn(promise, run_time=0.6))
         self.wait(1.8)
-        self.play(FadeOut(VGroup(block, line, gloss, promise), run_time=0.8))
+        self.play(FadeOut(VGroup(block, body_block, promise), run_time=0.8))
 
 
 class S03Machine(Scene):
@@ -231,7 +231,7 @@ class S03Machine(Scene):
         self.wait(0.8)
 
         note = theme.caption("one panel drops at the end of every scene", size=24)
-        note.to_edge(DOWN, buff=0.5)
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.6))
         self.play(machine.drop(0))
         self.wait(1.6)

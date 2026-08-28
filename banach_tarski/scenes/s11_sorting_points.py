@@ -67,9 +67,11 @@ class S11Batches(Scene):
         theme.apply_defaults(self)
 
         formula = theme.formula(
-            "S(A) M  =  { ρ(m) :  m ∈ M,  ρ begins with A }", size=36
+            r"S(A)\,M \;=\; \{\, \rho(m) \;:\; m \in M,\;"
+            r"\rho \text{ begins with } A \,\}",
+            size=36,
         )
-        formula.to_edge(UP, buff=0.5)
+        theme.head(formula)
         self.play(Write(formula, run_time=1.8))
 
         pts, words, heads, _ = build_orbit()
@@ -90,10 +92,11 @@ class S11Batches(Scene):
         legend = VGroup()
         for letter in ("a", "A", "b", "B"):
             dot = theme.body("●", size=22, color=BATCH_COLORS[letter])
-            tag = theme.body(
-                f"P{'1234'[('a', 'A', 'b', 'B').index(letter)]}  ·  begins with "
-                f"{theme.letter_glyph(letter)}",
-                size=22,
+            tag = theme.prose_math(
+                "{} begins with {}",
+                f"P_{'1234'[('a', 'A', 'b', 'B').index(letter)]}",
+                theme.letter_glyph(letter),
+                size=24,
                 color=theme.INK_DIM,
             )
             legend.add(VGroup(dot, tag).arrange(RIGHT, buff=0.20))
@@ -116,24 +119,25 @@ class S11Definitions(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
-        queue = theme.formula("X  =  A⁻¹M  ∪  A⁻²M  ∪  A⁻³M  ∪  ⋯", size=38)
-        queue.to_edge(UP, buff=1.0)
+        queue = theme.formula(
+            r"X \;=\; A^{-1}M \;\cup\; A^{-2}M \;\cup\; A^{-3}M \;\cup\; \cdots", size=38
+        )
+        note = theme.caption("the buffer, exactly as the empty word was earlier", size=26)
+        head_block = theme.head(VGroup(queue, note).arrange(DOWN, buff=0.20))
         self.play(Write(queue, run_time=1.8))
-        note = theme.caption("the buffer, exactly as the empty word was earlier", size=24)
-        note.next_to(queue, DOWN, buff=0.3)
         self.play(FadeIn(note, run_time=0.7))
         self.wait(0.6)
 
         batches = VGroup(
-            theme.formula("P₁  =  S(A) M  ∪  M  ∪  X", size=36, color=theme.C_A),
-            theme.formula("P₂  =  S(A⁻¹) M  ∖  X", size=36, color=theme.C_AI),
-            theme.formula("P₃  =  S(B) M", size=36, color=theme.C_B),
-            theme.formula("P₄  =  S(B⁻¹) M", size=36, color=theme.C_BI),
+            theme.formula(r"P_1 \;=\; S(A)\,M \;\cup\; M \;\cup\; X", size=36, color=theme.C_A),
+            theme.formula(r"P_2 \;=\; S(A^{-1})\,M \;\setminus\; X", size=36, color=theme.C_AI),
+            theme.formula(r"P_3 \;=\; S(B)\,M", size=36, color=theme.C_B),
+            theme.formula(r"P_4 \;=\; S(B^{-1})\,M", size=36, color=theme.C_BI),
         ).arrange(DOWN, buff=0.42, aligned_edge=LEFT)
-        batches.next_to(note, DOWN, buff=0.8)
+        theme.stage(batches)
         anim.write_lines(self, batches, per_line=1.1, lag=0.7)
         self.wait(2.4)
-        self.play(FadeOut(VGroup(queue, note, batches), run_time=0.8))
+        self.play(FadeOut(VGroup(head_block, batches), run_time=0.8))
 
 
 class S11InkInWater(Scene):
@@ -169,7 +173,7 @@ class S11InkInWater(Scene):
         self.wait(0.8)
 
         head = theme.body("apply A to the whole of P₂", size=32, color=theme.C_AI)
-        head.to_edge(UP, buff=0.6)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
 
         # The four batches are interleaved everywhere — that is what makes them
@@ -193,13 +197,13 @@ class S11InkInWater(Scene):
         landed = [freegroup.reduce("a" + w) for w in p2.words]
         targets = np.array([space.rgb_of(BATCH_COLORS[w[0] if w else ""]) for w in landed])
         ink = theme.caption("the colour spreads — it does not jump", size=24)
-        ink.to_edge(DOWN, buff=0.5)
+        theme.foot(ink)
         self.play(FadeIn(ink, run_time=0.6))
         self.play(space.recolor_cloud(p2, targets, run_time=3.2))
         self.wait(0.8)
 
-        result = theme.formula("A P₂  =  P₂ ∪ P₃ ∪ P₄", size=42, color=theme.GOLD)
-        result.to_edge(DOWN, buff=1.1)
+        result = theme.formula(r"A\,P_2 \;=\; P_2 \cup P_3 \cup P_4", size=42, color=theme.GOLD)
+        theme.foot(result)
         self.play(Write(result, run_time=1.4))
         self.wait(1.4)
 
@@ -209,7 +213,7 @@ class S11InkInWater(Scene):
             space.fade_cloud(clouds["a"], 1.0, run_time=1.4),
             space.fade_cloud(clouds[""], 1.0, run_time=1.4),
         )
-        whole = theme.formula("P₁ ∪ A P₂  =  L₀ ∖ D", size=42, color=theme.GOLD)
+        whole = theme.formula(r"P_1 \cup A\,P_2 \;=\; L_0 \setminus D", size=42, color=theme.GOLD)
         whole.move_to(result)
         self.play(Transform(result, whole, run_time=1.2))
         self.wait(2.2)
@@ -242,7 +246,7 @@ class S11SecondPair(Scene):
         stage.install(self)
 
         head = theme.body("and again, with B, on the fourth batch", size=32, color=theme.C_BI)
-        head.to_edge(UP, buff=0.6)
+        theme.head(head)
         self.play(FadeIn(head, run_time=0.8))
         self.play(*[space.fade_cloud(c, 0.05, run_time=1.2) for k, c in clouds.items() if k != "B"])
 
@@ -252,9 +256,9 @@ class S11SecondPair(Scene):
         targets = np.array([space.rgb_of(BATCH_COLORS[w[0] if w else ""]) for w in landed])
         self.play(space.recolor_cloud(p4, targets, run_time=2.8))
 
-        result = theme.formula("B P₄  =  P₁ ∪ P₂ ∪ P₄        P₃ ∪ B P₄  =  L₀ ∖ D", size=38,
+        result = theme.formula(r"B\,P_4 = P_1 \cup P_2 \cup P_4 \qquad P_3 \cup B\,P_4 = L_0 \setminus D", size=38,
                                color=theme.GOLD)
-        result.to_edge(DOWN, buff=0.6)
+        theme.foot(result)
         self.play(Write(result, run_time=1.8))
         self.play(*[space.fade_cloud(c, 1.0, run_time=1.2) for c in clouds.values()])
         self.wait(2.2)
@@ -268,13 +272,13 @@ class S11Equidecomposable(Scene):
         theme.apply_defaults(self)
 
         title = theme.display("equidecomposable", size=54, color=theme.GOLD)
-        title.to_edge(UP, buff=1.1)
+        theme.head(title)
         formal = VGroup(
             theme.body("Two sets are equidecomposable if one can be partitioned", size=32),
             theme.body("into finitely many parts which can be reassembled into", size=32),
             theme.body("the other by rigid motions alone.", size=32),
         ).arrange(DOWN, buff=0.30)
-        formal.next_to(title, DOWN, buff=0.7)
+        theme.stage(formal)
         plain = theme.body(
             "one becomes the other by cutting and moving, deforming nothing", size=32,
             color=theme.INK_DIM,
@@ -293,7 +297,7 @@ class S11Equidecomposable(Scene):
         )
         if got.width > 12.8:
             got.scale_to_fit_width(12.8)
-        got.to_edge(DOWN, buff=0.6)
+        theme.foot(got)
         self.play(Write(got, run_time=2.2))
         self.wait(2.4)
         self.play(FadeOut(VGroup(title, formal, plain, got), run_time=0.8))
@@ -377,7 +381,7 @@ class S11SplitScreen(Scene):
         self.wait(0.6)
 
         verdict = theme.body("the same sentence, word for word", size=30, color=theme.GOLD)
-        verdict.to_edge(DOWN, buff=0.35)
+        theme.foot(verdict)
         self.play(Write(verdict, run_time=1.4))
         self.wait(2.2)
         self.play(FadeOut(VGroup(tags, verdict, cols, divider), run_time=0.8))

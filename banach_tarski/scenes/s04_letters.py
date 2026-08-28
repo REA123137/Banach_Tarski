@@ -55,7 +55,7 @@ class S04RubikWord(Scene):
         self.wait(0.4)
 
         caption = theme.caption("the sequence of moves you performed can be written down", size=26)
-        caption.to_edge(DOWN, buff=0.7)
+        theme.foot(caption)
         self.play(FadeIn(caption, run_time=0.6))
 
         word = VGroup()
@@ -64,8 +64,8 @@ class S04RubikWord(Scene):
             turn = -PI / 2 if letter.islower() else PI / 2
             face = cube.front if letter.lower() == "a" else cube.top
             self.play(motifs.turn_face(cube, face, turn, run_time=0.85))
-            tile = theme.mono(theme.letter_glyph(letter), size=44,
-                              color=theme.LETTER_COLORS[letter])
+            tile = theme.formula(theme.letter_glyph(letter), size=48,
+                                 color=theme.LETTER_COLORS[letter])
             word.add(tile)
             word.arrange(RIGHT, buff=0.24).move_to(anchor)
             self.play(FadeIn(tile, shift=UP * 0.18, run_time=0.35))
@@ -110,18 +110,18 @@ class S04TwoRotations(Scene):
 
         tags = VGroup()
         for letter, colour, side in (("a", theme.C_A, LEFT), ("b", theme.C_B, RIGHT)):
-            tag = theme.mono(letter, size=52, color=colour)
+            tag = theme.formula(letter, size=56, color=colour)
             tag.move_to(side * 4.6 + UP * 1.4)
             tags.add(tag)
         self.play(FadeIn(tags, run_time=0.9))
         self.wait(2.0)
 
         inverses = VGroup(
-            theme.mono("a⁻¹", size=44, color=theme.C_AI).move_to(LEFT * 4.6 + UP * 0.35),
-            theme.mono("b⁻¹", size=44, color=theme.C_BI).move_to(RIGHT * 4.6 + UP * 0.35),
+            theme.formula("a^{-1}", size=48, color=theme.C_AI).move_to(LEFT * 4.6 + UP * 0.35),
+            theme.formula("b^{-1}", size=48, color=theme.C_BI).move_to(RIGHT * 4.6 + UP * 0.35),
         )
         note = theme.caption("turning the other way undoes what you just did", size=24)
-        note.to_edge(DOWN, buff=0.6)
+        theme.foot(note)
         self.play(FadeIn(inverses, run_time=0.8), FadeIn(note, run_time=0.8))
         self.wait(2.4)
 
@@ -132,9 +132,9 @@ class S04Reduce(Scene):
     def construct(self):
         theme.apply_defaults(self)
 
-        rule = theme.formula("a a⁻¹  =  e", size=54)
+        rule = theme.formula(r"a\,a^{-1} \;=\; e", size=54)
         gloss = theme.caption("e is the empty word: doing nothing", size=26)
-        head = VGroup(rule, gloss).arrange(DOWN, buff=0.35).to_edge(UP, buff=1.0)
+        head = theme.head(VGroup(rule, gloss).arrange(DOWN, buff=0.35))
         self.play(Write(rule, run_time=1.0), FadeIn(gloss, run_time=0.8))
         self.wait(0.8)
 
@@ -198,15 +198,15 @@ class S04Ribbon(Scene):
         typed = "abbAab"
         tiles = VGroup()
         for i, letter in enumerate(typed):
-            tile = theme.mono(theme.letter_glyph(letter), size=48,
-                              color=theme.LETTER_COLORS[letter])
+            tile = theme.formula(theme.letter_glyph(letter), size=52,
+                                 color=theme.LETTER_COLORS[letter])
             tile.move_to(strip.get_center() + LEFT * 4.4 + RIGHT * 1.15 * i)
             tiles.add(tile)
             self.play(FadeIn(tile, shift=DOWN * 0.22, run_time=0.32, rate_func=theme.SNAP))
 
         self.wait(0.6)
         note = theme.caption("one mechanical click per letter — then a clean silence", size=24)
-        note.to_edge(DOWN, buff=0.45)
+        theme.foot(note)
         self.play(FadeIn(note, run_time=0.6))
 
         # the collision: A and a annihilate, the ribbon closes up
