@@ -3,6 +3,8 @@
 #
 #   ./assemble.sh                       -> media/TwoBalls.mp4
 #   ./assemble.sh --parts               -> media/TwoBalls-1of4.mp4 …  (four acts)
+#   ./assemble.sh --under 28            -> as many parts as it takes to keep
+#                                          every file under 28 MB
 #   ./assemble.sh out.mp4 S06Columns S06Doubling
 #
 # Reads film_order.txt, finds each scene's most recently rendered mp4 under
@@ -62,6 +64,37 @@ if [[ "${1:-}" == "--parts" ]]; then
         echo "── act $((i + 1)): ${ACT_NAMES[$i]}"
         join_scenes "media/TwoBalls-$((i + 1))of${#ACT_STARTS[@]}.mp4" "${scenes[@]}"
     done
+    exit 0
+fi
+
+if [[ "${1:-}" == "--under" ]]; then
+    # Greedily pack consecutive scenes into parts, each under a size budget.
+    # Useful when the cut has to travel through something with an upload limit.
+    budget_mb="${2:-28}"
+    budget=$((budget_mb * 1024 * 1024))
+    declare -a part=()
+    size=0
+    n=0
+    parts=()
+    flush() {
+        [[ ${#part[@]} -eq 0 ]] && return
+        n=$((n + 1))
+        join_scenes "media/TwoBalls-part$n.mp4" "${part[@]}"
+        parts+=("media/TwoBalls-part$n.mp4")
+        part=()
+        size=0
+    }
+    for scene in "${ORDER[@]}"; do
+        file="$(find_scene "$scene")"
+        [[ -z "$file" ]] && { echo "  missing render: $scene" >&2; continue; }
+        bytes=$(stat -c %s "$file")
+        if [[ $((size + bytes)) -gt $budget && ${#part[@]} -gt 0 ]]; then flush; fi
+        part+=("$scene")
+        size=$((size + bytes))
+    done
+    flush
+    echo
+    echo "${#parts[@]} parts, each under ${budget_mb} MB"
     exit 0
 fi
 
